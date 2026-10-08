@@ -521,18 +521,47 @@
   function getApiUrl(){ return (window.DORM_API_URL || _lsGet(DORM_API_KEY) || '').trim(); }
   function getToken(){ return _lsGet(DORM_TOKEN_KEY); }
   function setToken(t){ _lsSet(DORM_TOKEN_KEY, t || ''); }
-  function apiCall(action, args){
-    var url = getApiUrl();
-    if (!url) return Promise.reject(new Error('ยังไม่ได้ตั้งค่าลิงก์ API (ไฟล์ config.js)'));
+  // คำสั่งที่ "อ่านอย่างเดียว" ลองใหม่อัตโนมัติได้ปลอดภัย (Apps Script บางครั้งตอบช้า/ตอบผิดครั้งแรก)
+  var API_SAFE_RETRY = { info:1, login:1, logout:1, getAppData:1, getBatchInvoiceData:1, getWebAppUrl:1, testLineConnection:1 };
+  function _setLoadingNote(t){ var el = document.getElementById('loading-text'); var lo = document.getElementById('loading-overlay'); if (el && lo && lo.style.display !== 'none') el.innerText = t; }
+  function _apiOnce(url, action, args, timeoutMs){
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = (ctrl && timeoutMs) ? setTimeout(function(){ ctrl.abort(); }, timeoutMs) : null;
     return fetch(url, {
       method: 'POST',
       // text/plain = ไม่ต้องทำ CORS preflight (Apps Script ไม่รองรับ OPTIONS)
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: action, args: args || [], token: getToken() })
+      body: JSON.stringify({ action: action, args: args || [], token: getToken() }),
+      signal: ctrl ? ctrl.signal : undefined
     }).then(function(r){
-      if (!r.ok) throw new Error('เชื่อมต่อ API ไม่สำเร็จ (HTTP ' + r.status + ')');
+      if (timer) clearTimeout(timer);
+      if (!r.ok) { var e1 = new Error('เชื่อมต่อ API ไม่สำเร็จ (HTTP ' + r.status + ')'); e1.retryable = true; throw e1; }
       return r.json();
+    }, function(err){
+      if (timer) clearTimeout(timer);
+      var e2 = new Error(err && err.name === 'AbortError' ? 'เซิร์ฟเวอร์ตอบช้าเกินไป' : 'เชื่อมต่ออินเทอร์เน็ตไม่ได้'); e2.retryable = true; throw e2;
     }).then(function(j){
+      // Google ส่งคำขอต่อเป็น GET (ได้คำตอบของ doGet) = คำสั่งนี้ไม่ได้ถูกประมวลผล
+      if (j && j.service === 'dorm-api' && !('result' in j) && !('error' in j)) { var e3 = new Error('เซิร์ฟเวอร์ไม่ได้รับคำสั่ง'); e3.retryable = true; throw e3; }
+      return j;
+    });
+  }
+  function apiCall(action, args){
+    var url = getApiUrl();
+    if (!url) return Promise.reject(new Error('ยังไม่ได้ตั้งค่าลิงก์ API (ไฟล์ config.js)'));
+    var safe = !!API_SAFE_RETRY[action];
+    var maxTry = safe ? 3 : 1;
+    function attempt(n){
+      return _apiOnce(url, action, args, 0).catch(function(err){
+        if (err && err.retryable && n < maxTry) {
+          _setLoadingNote('เซิร์ฟเวอร์ตอบช้า กำลังลองใหม่ (' + (n + 1) + '/' + maxTry + ')...');
+          return new Promise(function(res){ setTimeout(res, 2000 * n); }).then(function(){ return attempt(n + 1); });
+        }
+        if (err && err.retryable && !safe) err.message = err.message + ' — ไม่แน่ใจว่าบันทึกสำเร็จหรือไม่ กรุณารีเฟรชหน้าแล้วตรวจสอบก่อนทำซ้ำ';
+        throw err;
+      });
+    }
+    return attempt(1).then(function(j){
       if (j && j.ok) return j.result;
       var err = new Error((j && j.error) || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์');
       err.code = j && j.code;
@@ -1869,6 +1898,15 @@
 
   function loadAppData() {
     var lo = document.getElementById('loading-overlay'); if (lo) lo.style.display = '';
+    var lt = document.getElementById('loading-text'); if (lt) lt.innerText = 'กำลังเชื่อมต่อฐานข้อมูล...';
+    var _t0 = Date.now();
+    var _tick = setInterval(function(){
+      if (!lo || lo.style.display === 'none' || !lt) { clearInterval(_tick); return; }
+      var tx = lt.innerText || '';
+      if (tx.indexOf('ล้มเหลว') > -1 || tx.indexOf('ผิดพลาด') > -1) { clearInterval(_tick); return; }
+      var sec = Math.round((Date.now() - _t0) / 1000);
+      lt.innerText = tx.replace(/ \(\d+ วินาที\)$/, '') + ' (' + sec + ' วินาที)';
+    }, 1000);
     try {
       google.script.run
         .withSuccessHandler(function(res) {
@@ -1898,7 +1936,7 @@
             initAppUI();
           } catch(err) { document.getElementById('loading-text').innerHTML = '<span style="color:#ef4444;">Frontend Error: ' + err.message + '</span>'; }
         })
-        .withFailureHandler(function(err) { document.getElementById('loading-text').innerHTML = '<span style="color:#ef4444;">เชื่อมต่อล้มเหลว: ' + err.message + '</span>'; })
+        .withFailureHandler(function(err) { document.getElementById('loading-text').innerHTML = '<span style="color:#ef4444;">เชื่อมต่อล้มเหลว: ' + err.message + '</span><br><button class="g-btn g-btn-primary g-btn-sm" style="margin-top:12px;" onclick="loadAppData()">ลองใหม่</button>'; })
         .getAppData();
     } catch(e) { document.getElementById('loading-text').innerHTML = '<span style="color:#ef4444;">Execution Error: ' + e.message + '</span>'; }
   };
