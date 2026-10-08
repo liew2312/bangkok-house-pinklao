@@ -1,0 +1,9 @@
+# push ขึ้น Apps Script เฉพาะ "ฝั่ง server" เท่านั้น
+# (ทุกอย่างถูก ignore ก่อน แล้วค่อย whitelist ด้วย !)
+**/**
+
+!appsscript.json
+!Code.js
+
+# หน้าเว็บอยู่ในโฟลเดอร์ docs/ (เผยแพร่ด้วย GitHub Pages) — ไม่ต้อง push ขึ้น Apps Script
+# README.md, SETUP.md, *.zip, *.bak, _backup_*/ จะถูกกันออกโดยอัตโนมัติ

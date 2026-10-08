@@ -1,0 +1,20 @@
+# ── clasp / credentials (อย่า commit ขึ้น GitHub เด็ดขาด) ──
+.clasprc.json
+~/.clasprc.json
+.clasp.json
+
+# ── ไฟล์ชั่วคราว / สำรอง ──
+*.bak
+*.tmp
+.DS_Store
+Thumbs.db
+
+# ── ไฟล์ที่ไม่ต้องขึ้น repo ──
+Dormitory Management Web Design.zip
+node_modules/
+
+# ── ข้อมูลจริงของหอพัก / ไฟล์ทำงานชั่วคราว (ห้ามขึ้น repo สาธารณะ) ──
+outputs/
+spreadsheet_work/
+_backup_*/
+build_meter_workbook.mjs

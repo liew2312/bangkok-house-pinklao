@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ap-thailand-design-system-2126cdcf-0fa6-40f1-b255-b65fc410b328/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/ap-thailand-design-system-2126cdcf-0fa6-40f1-b255-b65fc410b328/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ap-thailand-design-system-2126cdcf-0fa6-40f1-b255-b65fc410b328/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ap-thailand-design-system-2126cdcf-0fa6-40f1-b255-b65fc410b328/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ap-thailand-design-system-2126cdcf-0fa6-40f1-b255-b65fc410b328/styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="_ds/ap-thailand-design-system-2126cdcf-0fa6-40f1-b255-b65fc410b328/_ds_bundle.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  /* ── NomadKit palette remap (sand · ocean · forest) ── */
+  :root {
+    --ap-red-900:#6E4A24; --ap-red-800:#835729; --ap-red-700:#9A6A38; --ap-red-600:#D4A373; --ap-red-500:#DDB488; --ap-red-400:#E3C09B; --ap-red-300:#EACFB4; --ap-red-200:#F0DDC9; --ap-red-100:#F7ECDD; --ap-red-50:#FBF5EC;
+    --ap-ink-900:#1C1917; --ap-ink-800:#292524; --ap-ink-700:#44403C; --ap-ink-600:#57534E; --ap-ink-500:#78716C; --ap-ink-400:#A8A29E; --ap-ink-300:#C4BEB4; --ap-ink-200:#DBD5CA; --ap-ink-100:#ECE7DC;
+    --ap-neutral-0:#FFFFFF; --ap-neutral-50:#FFFDF7; --ap-neutral-100:#FFFDF7; --ap-neutral-200:#F6F0E4; --ap-neutral-300:#E9E0CF; --ap-neutral-400:#CFC3A6; --ap-neutral-500:#A89B7C;
+    --ap-success:#166534; --ap-success-bg:#E3F0E7; --ap-warning:#CA8A04; --ap-warning-bg:#FBF3DC; --ap-danger:#DC2626; --ap-danger-bg:#FBE7E7; --ap-info:#0891B2; --ap-info-bg:#E0F2F7;
+    --focus-ring:0 0 0 3px rgba(212,163,115,.45);
+    --action-ghost-hover:rgba(41,37,36,.06); --action-ghost-press:rgba(41,37,36,.12);
+  }
+  body { font-family: "AP", "Noto Sans Thai", system-ui, sans-serif; background: var(--surface-canvas); color: var(--fg-1); -webkit-font-smoothing: antialiased; }
+  a { color: var(--ap-info); text-decoration: none; }
+  a:hover { color: #0E7490; }
+  input, button, select { font-family: inherit; }
+  input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--ap-neutral-400); border-radius: 999px; border: 2px solid var(--surface-canvas); }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+</style>
+</helmet>
+
+<div style="display:grid;grid-template-columns:248px 1fr;height:100vh;overflow:hidden;">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside style="background:#fff;border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;padding:24px 16px;overflow-y:auto;">
+    <div style="display:flex;align-items:center;gap:12px;padding:4px 8px 24px;">
+      <div style="position:relative;width:34px;height:34px;flex:none;">
+        <span style="position:absolute;inset:0;background:var(--ap-red-200);"></span>
+        <span style="position:absolute;inset:0;transform:translate(4px,4px);background:var(--ap-red-400);"></span>
+        <span style="position:absolute;inset:0;transform:translate(8px,8px);background:var(--ap-red-600);"></span>
+      </div>
+      <div style="line-height:1.1;">
+        <div style="font-weight:700;font-size:15px;letter-spacing:-.01em;">AP Residence</div>
+        <div style="font-size:11px;color:var(--fg-3);letter-spacing:.04em;">DORM MANAGER</div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--fg-4);padding:8px 10px 6px;">เมนูหลัก</div>
+    <nav style="display:flex;flex-direction:column;gap:2px;">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="7">
+        <button onClick="{{ item.onClick }}" style="{{ item.style }}" style-hover="{{ item.hover }}">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ item.icon }}"></path></svg>
+          <span style="flex:1;text-align:left;">{{ item.label }}</span>
+          <sc-if value="{{ item.badge }}" hint-placeholder-val="">
+            <span style="{{ item.badgeStyle }}">{{ item.badge }}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+
+    <div style="margin-top:auto;padding-top:20px;">
+      <div style="background:var(--ap-red-600);padding:16px;color:var(--ap-ink-900);">
+        <div style="font-size:12px;color:rgba(41,37,36,.6);letter-spacing:.04em;">รอบบิลปัจจุบัน</div>
+        <div style="font-weight:700;font-size:18px;margin-top:2px;">กรกฎาคม 2569</div>
+        <div style="font-size:12px;color:rgba(41,37,36,.6);margin-top:8px;">จดมิเตอร์แล้ว {{ metrics.readDone }}/{{ metrics.occupied }} ห้อง</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main style="display:flex;flex-direction:column;overflow:hidden;">
+    <!-- Topbar -->
+    <header style="display:flex;align-items:center;gap:16px;padding:16px 32px;background:rgba(255,253,247,.82);backdrop-filter:blur(16px);border-bottom:1px solid var(--border-subtle);flex:none;z-index:5;">
+      <div style="flex:1;">
+        <div class="ap-eyebrow" style="font-size:11px;">{{ pageMeta.eyebrow }}</div>
+        <h1 style="font-size:22px;font-weight:700;margin:2px 0 0;letter-spacing:-.01em;">{{ pageMeta.title }}</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border-subtle);border-radius:999px;padding:9px 16px;width:240px;color:var(--fg-3);">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <span style="font-size:13px;">ค้นหาห้อง / ผู้เช่า…</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding-left:8px;border-left:1px solid var(--border-subtle);">
+        <div style="width:38px;height:38px;border-radius:999px;background:var(--ap-ink-800);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;">ก</div>
+        <div style="line-height:1.15;">
+          <div style="font-size:13px;font-weight:600;">คุณกานต์</div>
+          <div style="font-size:11px;color:var(--fg-3);">เจ้าของหอ</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scroll area -->
+    <div style="flex:1;overflow-y:auto;padding:28px 32px 64px;">
+
+      <!-- ══════════ DASHBOARD ══════════ -->
+      <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:fadeIn .3s ease;">
+        <!-- layout switcher -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+          <span style="font-size:13px;color:var(--fg-3);">มุมมองแดชบอร์ด</span>
+          <div style="display:inline-flex;background:var(--surface-sunken);border-radius:999px;padding:3px;gap:2px;">
+            <button onClick="{{ setLayoutA }}" style="{{ tabAStyle }}">การเงิน · ภาพรวม</button>
+            <button onClick="{{ setLayoutB }}" style="{{ tabBStyle }}">โฟกัสงานวันนี้</button>
+          </div>
+        </div>
+
+        <!-- KPI strip (shared) -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;">
+          <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:18px 20px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:12.5px;color:var(--fg-3);white-space:nowrap;">{{ k.label }}</span>
+                <span style="{{ k.dotStyle }}flex:none;"></span>
+              </div>
+              <div style="font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:8px;line-height:1;">{{ k.value }}</div>
+              <div style="font-size:12px;margin-top:8px;color:{{ k.deltaColor }};">{{ k.delta }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- LAYOUT A : finance / analytics -->
+        <sc-if value="{{ layoutA }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;animation:fadeIn .25s ease;">
+          <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px 24px;">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;">
+              <h3 style="font-size:16px;font-weight:700;margin:0;">รายรับ 6 เดือนล่าสุด</h3>
+              <span style="font-size:12px;color:var(--fg-3);">เฉลี่ย {{ avgRevenue }}/เดือน</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:18px;height:200px;margin-top:24px;padding-bottom:4px;">
+              <sc-for list="{{ revBars }}" as="b" hint-placeholder-count="6">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                  <span style="font-size:11px;color:var(--fg-3);font-weight:600;">{{ b.short }}</span>
+                  <div style="width:100%;background:{{ b.color }};height:{{ b.h }};border-radius:6px 6px 0 0;transition:height .5s var(--ease-standard);"></div>
+                  <span style="font-size:12px;color:var(--fg-2);">{{ b.month }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px 24px;display:flex;flex-direction:column;">
+            <h3 style="font-size:16px;font-weight:700;margin:0 0 18px;">อัตราการเข้าพัก</h3>
+            <div style="display:flex;align-items:center;gap:22px;">
+              <div style="position:relative;width:132px;height:132px;flex:none;border-radius:999px;background:{{ donutBg }};">
+                <div style="position:absolute;inset:20px;background:#fff;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                  <div style="font-size:26px;font-weight:700;line-height:1;">{{ metrics.occRate }}%</div>
+                  <div style="font-size:10.5px;color:var(--fg-3);">เข้าพัก</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px;flex:1;">
+                <div style="display:flex;align-items:center;gap:10px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--ap-success);"></span><span style="font-size:13px;flex:1;">เข้าพัก</span><b style="font-size:14px;">{{ metrics.occupied }}</b></div>
+                <div style="display:flex;align-items:center;gap:10px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--ap-neutral-400);"></span><span style="font-size:13px;flex:1;">ว่าง</span><b style="font-size:14px;">{{ metrics.vacant }}</b></div>
+                <div style="display:flex;align-items:center;gap:10px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--ap-warning);"></span><span style="font-size:13px;flex:1;">ปิดปรับปรุง</span><b style="font-size:14px;">{{ metrics.maint }}</b></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="grid-column:1 / -1;display:grid;grid-template-columns:1.3fr 1fr;gap:16px;">
+            <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px 24px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <h3 style="font-size:16px;font-weight:700;margin:0;">ต้องตามเก็บ</h3>
+                <a onClick="{{ goPayments }}" style="font-size:13px;cursor:pointer;">ดูทั้งหมด →</a>
+              </div>
+              <sc-for list="{{ chaseList }}" as="c" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--border-subtle);">
+                  <div style="width:44px;height:44px;border-radius:12px;background:var(--surface-sunken);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none;">{{ c.id }}</div>
+                  <div style="flex:1;line-height:1.3;"><div style="font-size:14px;font-weight:600;">{{ c.name }}</div><div style="font-size:12px;color:var(--fg-3);">{{ c.statusLabel }}</div></div>
+                  <div style="text-align:right;"><div style="font-weight:700;font-size:14px;">{{ c.amount }}</div><div style="font-size:11px;color:var(--ap-danger);">{{ c.overdue }}</div></div>
+                  <button onClick="{{ c.onRemind }}" style="border:1px solid var(--border-default);background:#fff;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;" style-hover="{{ ghostHover }}">ทวงถาม</button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px 24px;">
+              <h3 style="font-size:16px;font-weight:700;margin:0 0 6px;">ความเคลื่อนไหวล่าสุด</h3>
+              <sc-for list="{{ activity }}" as="a" hint-placeholder-count="5">
+                <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-subtle);">
+                  <span style="width:9px;height:9px;border-radius:999px;background:{{ a.color }};margin-top:5px;flex:none;"></span>
+                  <div style="flex:1;line-height:1.35;"><div style="font-size:13.5px;">{{ a.text }}</div><div style="font-size:11.5px;color:var(--fg-3);">{{ a.time }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- LAYOUT B : today's worklist -->
+        <sc-if value="{{ layoutB }}" hint-placeholder-val="">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;animation:fadeIn .25s ease;">
+          <sc-for list="{{ worklists }}" as="col" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden;">
+              <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:10px;">
+                <span style="width:34px;height:34px;border-radius:10px;background:{{ col.iconBg }};color:{{ col.iconColor }};display:flex;align-items:center;justify-content:center;flex:none;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ col.icon }}"></path></svg>
+                </span>
+                <div style="flex:1;"><div style="font-size:15px;font-weight:700;">{{ col.title }}</div><div style="font-size:12px;color:var(--fg-3);">{{ col.sub }}</div></div>
+                <span style="background:{{ col.countBg }};color:{{ col.countColor }};font-weight:700;font-size:13px;border-radius:999px;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;padding:0 8px;">{{ col.count }}</span>
+              </div>
+              <div style="padding:8px 12px 14px;display:flex;flex-direction:column;gap:6px;max-height:440px;overflow-y:auto;">
+                <sc-for list="{{ col.items }}" as="it" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:12px;" style-hover="{{ rowHover }}">
+                    <div style="width:40px;height:40px;border-radius:10px;background:var(--surface-sunken);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none;">{{ it.tag }}</div>
+                    <div style="flex:1;line-height:1.3;min-width:0;"><div style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ it.title }}</div><div style="font-size:12px;color:var(--fg-3);">{{ it.sub }}</div></div>
+                    <button onClick="{{ it.onAction }}" style="{{ col.btnStyle }}" style-hover="{{ col.btnHover }}">{{ col.action }}</button>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ col.empty }}" hint-placeholder-val="">
+                  <div style="text-align:center;padding:28px 0;color:var(--fg-4);font-size:13px;">ไม่มีงานค้าง 🎉</div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- ══════════ ROOMS ══════════ -->
+      <sc-if value="{{ isRooms }}" hint-placeholder-val="">
+      <div style="animation:fadeIn .3s ease;">
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+          <sc-for list="{{ roomFilters }}" as="f" hint-placeholder-count="4">
+            <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}<span style="opacity:.6;margin-left:6px;">{{ f.count }}</span></button>
+          </sc-for>
+        </div>
+        <sc-for list="{{ floors }}" as="fl" hint-placeholder-count="6">
+          <div style="margin-bottom:22px;">
+            <div style="font-size:13px;font-weight:700;color:var(--fg-2);margin-bottom:10px;letter-spacing:.02em;">ชั้น {{ fl.floor }} · {{ fl.type }}</div>
+            <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:12px;">
+              <sc-for list="{{ fl.rooms }}" as="r" hint-placeholder-count="8">
+                <button onClick="{{ r.onClick }}" style="{{ r.cardStyle }}" style-hover="{{ r.cardHover }}">
+                  <span style="{{ r.badgeStyle }}"></span>
+                  <div style="font-size:16px;font-weight:700;">{{ r.id }}</div>
+                  <div style="font-size:11px;color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">{{ r.sub }}</div>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ══════════ TENANTS ══════════ -->
+      <sc-if value="{{ isTenants }}" hint-placeholder-val="">
+      <div style="animation:fadeIn .3s ease;background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden;">
+        <div style="display:grid;grid-template-columns:70px 1.4fr 1.1fr 1fr 1fr 90px;gap:12px;padding:14px 24px;background:var(--surface-sunken);font-size:12px;font-weight:700;color:var(--fg-2);letter-spacing:.02em;">
+          <span>ห้อง</span><span>ผู้เช่า</span><span>เบอร์ติดต่อ</span><span>เข้าอยู่เมื่อ</span><span>ค่าเช่า/เดือน</span><span>สถานะ</span>
+        </div>
+        <sc-for list="{{ tenantRows }}" as="t" hint-placeholder-count="10">
+          <div onClick="{{ t.onClick }}" style="display:grid;grid-template-columns:70px 1.4fr 1.1fr 1fr 1fr 90px;gap:12px;padding:15px 24px;border-top:1px solid var(--border-subtle);align-items:center;cursor:pointer;" style-hover="{{ rowHover }}">
+            <span style="font-weight:700;font-size:14px;">{{ t.id }}</span>
+            <div style="display:flex;align-items:center;gap:10px;min-width:0;"><span style="width:34px;height:34px;border-radius:999px;background:{{ t.avatarBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none;">{{ t.initial }}</span><span style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ t.name }}</span></div>
+            <span style="font-size:13px;color:var(--fg-2);">{{ t.phone }}</span>
+            <span style="font-size:13px;color:var(--fg-2);">{{ t.moveIn }}</span>
+            <span style="font-size:14px;font-weight:600;">{{ t.rent }}</span>
+            <span style="{{ t.statusStyle }}">{{ t.statusLabel }}</span>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ══════════ METER / BILLING ══════════ -->
+      <sc-if value="{{ isBilling }}" hint-placeholder-val="">
+      <div style="animation:fadeIn .3s ease;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;">
+          <div style="background:var(--ap-red-50);border:1px solid var(--ap-red-200);border-radius:14px;padding:14px 20px;display:flex;align-items:center;gap:14px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ap-red-600)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 4-4"></path><path d="M3.34 19a10 10 0 1 1 17.32 0"></path></svg>
+            <div><div style="font-size:13px;color:var(--fg-2);">ยังไม่ได้จดมิเตอร์</div><div style="font-size:22px;font-weight:700;line-height:1.1;">{{ metrics.unread }} ห้อง</div></div>
+          </div>
+          <div style="flex:1;font-size:13px;color:var(--fg-3);line-height:1.5;">กรอกเลขมิเตอร์รอบนี้ ระบบจะคำนวณหน่วยและค่าน้ำค่าไฟให้อัตโนมัติ<br>อัตรา: น้ำ {{ waterRateLabel }}/หน่วย · ไฟ {{ elecRateLabel }}/หน่วย</div>
+          <div style="display:inline-flex;background:var(--surface-sunken);border-radius:999px;padding:3px;gap:2px;">
+            <button onClick="{{ setMeterUnread }}" style="{{ meterTabUnread }}">ค้างจด ({{ metrics.unread }})</button>
+            <button onClick="{{ setMeterAll }}" style="{{ meterTabAll }}">ทั้งหมด</button>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden;">
+          <div style="display:grid;grid-template-columns:80px 1.2fr 140px 140px 90px 120px 130px;gap:10px;padding:13px 20px;background:var(--surface-sunken);font-size:12px;font-weight:700;color:var(--fg-2);align-items:center;">
+            <span>ห้อง</span><span>ผู้เช่า</span><span>น้ำ (ก่อน→ปัจจุบัน)</span><span>ไฟ (ก่อน→ปัจจุบัน)</span><span>หน่วย</span><span>รวมบิล</span><span></span>
+          </div>
+          <sc-for list="{{ meterRows }}" as="m" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:80px 1.2fr 140px 140px 90px 120px 130px;gap:10px;padding:12px 20px;border-top:1px solid var(--border-subtle);align-items:center;">
+              <span style="font-weight:700;font-size:14px;">{{ m.id }}</span>
+              <span style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ m.name }}</span>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:13px;color:var(--fg-3);width:34px;">{{ m.prevW }}</span><span style="color:var(--fg-4);">→</span><input type="number" value="{{ m.currW }}" onInput="{{ m.onW }}" placeholder="—" style="width:60px;padding:7px 8px;border:1px solid var(--border-default);border-radius:8px;font-size:13px;text-align:center;"></div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:13px;color:var(--fg-3);width:40px;">{{ m.prevE }}</span><span style="color:var(--fg-4);">→</span><input type="number" value="{{ m.currE }}" onInput="{{ m.onE }}" placeholder="—" style="width:60px;padding:7px 8px;border:1px solid var(--border-default);border-radius:8px;font-size:13px;text-align:center;"></div>
+              <span style="font-size:12.5px;color:var(--fg-2);line-height:1.3;">{{ m.unitsLabel }}</span>
+              <span style="font-size:14px;font-weight:700;">{{ m.total }}</span>
+              <button onClick="{{ m.onGen }}" disabled="{{ m.genDisabled }}" style="{{ m.genStyle }}">{{ m.genLabel }}</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══════════ PAYMENTS ══════════ -->
+      <sc-if value="{{ isPayments }}" hint-placeholder-val="">
+      <div style="animation:fadeIn .3s ease;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
+          <div style="background:var(--ap-success-bg);border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:var(--ap-success);font-weight:600;">เก็บแล้วเดือนนี้</div><div style="font-size:26px;font-weight:700;margin-top:4px;">{{ metrics.collected }}</div><div style="font-size:12px;color:var(--fg-3);margin-top:2px;">{{ metrics.paidCount }} ห้อง</div></div>
+          <div style="background:var(--ap-warning-bg);border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:var(--ap-warning);font-weight:600;">รอตรวจสลิป</div><div style="font-size:26px;font-weight:700;margin-top:4px;">{{ metrics.pendingAmt }}</div><div style="font-size:12px;color:var(--fg-3);margin-top:2px;">{{ metrics.pendingCount }} ห้อง</div></div>
+          <div style="background:var(--ap-danger-bg);border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:var(--ap-danger);font-weight:600;">ค้างชำระ</div><div style="font-size:26px;font-weight:700;margin-top:4px;">{{ metrics.outstanding }}</div><div style="font-size:12px;color:var(--fg-3);margin-top:2px;">{{ metrics.unpaidCount }} ห้อง</div></div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <sc-for list="{{ payFilters }}" as="f" hint-placeholder-count="4">
+            <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}<span style="opacity:.6;margin-left:6px;">{{ f.count }}</span></button>
+          </sc-for>
+        </div>
+
+        <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden;">
+          <sc-for list="{{ payRows }}" as="p" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 24px;border-top:1px solid var(--border-subtle);">
+              <div style="width:46px;height:46px;border-radius:12px;background:var(--surface-sunken);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none;">{{ p.id }}</div>
+              <div style="flex:1;min-width:0;line-height:1.35;"><div style="font-size:14px;font-weight:600;">{{ p.name }}</div><div style="font-size:12px;color:var(--fg-3);">{{ p.breakdown }}</div></div>
+              <div style="text-align:right;min-width:100px;"><div style="font-weight:700;font-size:16px;">{{ p.total }}</div><div style="font-size:11.5px;color:{{ p.metaColor }};">{{ p.meta }}</div></div>
+              <span style="{{ p.statusStyle }}">{{ p.statusLabel }}</span>
+              <div style="display:flex;gap:8px;min-width:210px;justify-content:flex-end;">
+                <sc-for list="{{ p.actions }}" as="act" hint-placeholder-count="2">
+                  <button onClick="{{ act.onClick }}" style="{{ act.style }}" style-hover="{{ act.hover }}">{{ act.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══════════ REPORTS ══════════ -->
+      <sc-if value="{{ isReports }}" hint-placeholder-val="">
+      <div style="animation:fadeIn .3s ease;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;">
+          <sc-for list="{{ reportStats }}" as="s" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:18px 20px;"><div style="font-size:12.5px;color:var(--fg-3);">{{ s.label }}</div><div style="font-size:26px;font-weight:700;margin-top:6px;line-height:1;">{{ s.value }}</div><div style="font-size:12px;color:var(--fg-3);margin-top:6px;">{{ s.sub }}</div></div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;">
+          <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px 24px;">
+            <h3 style="font-size:16px;font-weight:700;margin:0 0 4px;">รายรับ vs ค้างชำระ รายเดือน</h3>
+            <div style="display:flex;align-items:flex-end;gap:16px;height:220px;margin-top:22px;">
+              <sc-for list="{{ revBars }}" as="b" hint-placeholder-count="6">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                  <div style="width:100%;display:flex;gap:4px;align-items:flex-end;height:100%;justify-content:center;">
+                    <div style="width:42%;background:var(--ap-red-600);height:{{ b.h }};border-radius:5px 5px 0 0;"></div>
+                    <div style="width:42%;background:var(--ap-neutral-400);height:{{ b.hOut }};border-radius:5px 5px 0 0;"></div>
+                  </div>
+                  <span style="font-size:12px;color:var(--fg-2);">{{ b.month }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:20px;margin-top:16px;font-size:12.5px;"><span style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--ap-red-600);"></span>เก็บได้จริง</span><span style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border-radius:3px;background:var(--ap-neutral-400);"></span>ค้างชำระ</span></div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-sm);padding:22px 24px;">
+            <h3 style="font-size:16px;font-weight:700;margin:0 0 18px;">สัดส่วนรายได้เดือนนี้</h3>
+            <div style="display:flex;align-items:center;gap:22px;">
+              <div style="position:relative;width:128px;height:128px;flex:none;border-radius:999px;background:{{ incomeDonut }};">
+                <div style="position:absolute;inset:22px;background:#fff;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:19px;font-weight:700;">{{ metrics.collected }}</div><div style="font-size:10px;color:var(--fg-3);">รวม</div></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:14px;flex:1;">
+                <sc-for list="{{ incomeLegend }}" as="l" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:10px;"><span style="width:11px;height:11px;border-radius:3px;background:{{ l.color }};"></span><span style="font-size:13px;flex:1;">{{ l.label }}</span><b style="font-size:13px;">{{ l.value }}</b></div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ══════════ MAINTENANCE ══════════ -->
+      <sc-if value="{{ isMaintenance }}" hint-placeholder-val="">
+      <div style="animation:fadeIn .3s ease;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <sc-for list="{{ maintCols }}" as="col" hint-placeholder-count="3">
+          <div style="background:var(--surface-sunken);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 6px;"><span style="width:10px;height:10px;border-radius:999px;background:{{ col.dot }};"></span><span style="font-weight:700;font-size:14px;">{{ col.title }}</span><span style="margin-left:auto;font-size:12px;color:var(--fg-3);font-weight:600;">{{ col.count }}</span></div>
+            <sc-for list="{{ col.items }}" as="j" hint-placeholder-count="2">
+              <div style="background:#fff;border:1px solid var(--border-subtle);border-radius:12px;padding:14px;box-shadow:var(--shadow-xs);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><span style="font-size:12px;font-weight:700;color:var(--fg-2);">ห้อง {{ j.room }}</span><span style="{{ j.prioStyle }}">{{ j.prio }}</span></div>
+                <div style="font-size:14px;font-weight:600;line-height:1.3;">{{ j.title }}</div>
+                <div style="font-size:12px;color:var(--fg-3);margin-top:4px;">{{ j.meta }}</div>
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                  <sc-for list="{{ j.actions }}" as="act" hint-placeholder-count="1">
+                    <button onClick="{{ act.onClick }}" style="{{ act.style }}" style-hover="{{ ghostHover }}">{{ act.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ col.empty }}" hint-placeholder-val="">
+              <div style="text-align:center;padding:24px 0;color:var(--fg-4);font-size:12.5px;">— ว่าง —</div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <!-- ═══ ROOM DRAWER ═══ -->
+  <sc-if value="{{ drawerRoom }}" hint-placeholder-val="">
+  <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(19,19,23,.4);z-index:40;animation:fadeIn .2s ease;">
+    <div onClick="{{ stop }}" style="position:absolute;top:0;right:0;bottom:0;width:400px;background:#fff;box-shadow:var(--shadow-xl);animation:slideIn .3s var(--ease-emphasized);display:flex;flex-direction:column;overflow-y:auto;">
+      <div style="background:{{ drawerRoom.headBg }};color:{{ drawerRoom.headColor }};padding:24px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <div><div style="font-size:12px;opacity:.7;letter-spacing:.04em;">ห้อง</div><div style="font-size:34px;font-weight:700;line-height:1;">{{ drawerRoom.id }}</div><div style="font-size:13px;opacity:.85;margin-top:6px;">{{ drawerRoom.type }} · {{ drawerRoom.rentLabel }}/เดือน</div></div>
+          <button onClick="{{ closeDrawer }}" style="background:rgba(255,255,255,.18);border:none;color:inherit;width:34px;height:34px;border-radius:999px;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <span style="{{ drawerRoom.statusChip }}">{{ drawerRoom.statusLabel }}</span>
+      </div>
+      <div style="padding:24px;display:flex;flex-direction:column;gap:22px;">
+        <sc-if value="{{ drawerRoom.hasTenant }}" hint-placeholder-val="">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--fg-4);text-transform:uppercase;margin-bottom:12px;">ผู้เช่าปัจจุบัน</div>
+            <div style="display:flex;align-items:center;gap:14px;"><span style="width:52px;height:52px;border-radius:999px;background:{{ drawerRoom.avatarBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;">{{ drawerRoom.initial }}</span><div><div style="font-size:16px;font-weight:700;">{{ drawerRoom.tenantName }}</div><div style="font-size:13px;color:var(--fg-3);">เข้าอยู่ {{ drawerRoom.moveIn }}</div></div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+              <div style="background:var(--surface-sunken);border-radius:12px;padding:12px 14px;"><div style="font-size:11px;color:var(--fg-3);">เบอร์โทร</div><div style="font-size:14px;font-weight:600;margin-top:2px;">{{ drawerRoom.phone }}</div></div>
+              <div style="background:var(--surface-sunken);border-radius:12px;padding:12px 14px;"><div style="font-size:11px;color:var(--fg-3);">เงินประกัน</div><div style="font-size:14px;font-weight:600;margin-top:2px;">{{ drawerRoom.deposit }}</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--fg-4);text-transform:uppercase;margin-bottom:12px;">บิลรอบนี้ · กรกฎาคม</div>
+            <div style="border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;">
+              <div style="display:flex;justify-content:space-between;padding:11px 15px;font-size:13.5px;"><span style="color:var(--fg-2);">ค่าเช่า</span><b>{{ drawerRoom.rentLabel }}</b></div>
+              <div style="display:flex;justify-content:space-between;padding:11px 15px;font-size:13.5px;border-top:1px solid var(--border-subtle);"><span style="color:var(--fg-2);">ค่าน้ำ · {{ drawerRoom.waterUnits }}</span><b>{{ drawerRoom.waterAmt }}</b></div>
+              <div style="display:flex;justify-content:space-between;padding:11px 15px;font-size:13.5px;border-top:1px solid var(--border-subtle);"><span style="color:var(--fg-2);">ค่าไฟ · {{ drawerRoom.elecUnits }}</span><b>{{ drawerRoom.elecAmt }}</b></div>
+              <div style="display:flex;justify-content:space-between;padding:13px 15px;font-size:15px;border-top:2px solid var(--ap-ink-800);background:var(--surface-sunken);"><b>รวมทั้งสิ้น</b><b>{{ drawerRoom.billTotal }}</b></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onClick="{{ drawerRoom.onRemind }}" style="flex:1;background:var(--ap-red-600);color:var(--ap-ink-900);border:none;border-radius:999px;padding:13px;font-weight:600;font-size:14px;cursor:pointer;" style-hover="{{ redHover }}">ส่งใบแจ้งหนี้</button>
+            <button style="border:1.5px solid var(--fg-1);background:#fff;border-radius:999px;padding:13px 20px;font-weight:600;font-size:14px;cursor:pointer;">โทร</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ drawerRoom.isVacant }}" hint-placeholder-val="">
+          <div style="text-align:center;padding:20px 0;">
+            <div style="font-size:15px;color:var(--fg-2);margin-bottom:6px;">ห้องนี้ว่างอยู่</div>
+            <div style="font-size:13px;color:var(--fg-3);margin-bottom:20px;">พร้อมให้เข้าพักได้ทันที</div>
+            <button onClick="{{ drawerRoom.onAnnounce }}" style="background:var(--ap-red-600);color:var(--ap-ink-900);border:none;border-radius:999px;padding:13px 28px;font-weight:600;font-size:14px;cursor:pointer;" style-hover="{{ redHover }}">ประกาศห้องว่าง</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ═══ SLIP MODAL ═══ -->
+  <sc-if value="{{ slipRoom }}" hint-placeholder-val="">
+  <div onClick="{{ closeSlip }}" style="position:fixed;inset:0;background:rgba(19,19,23,.5);z-index:50;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;">
+    <div onClick="{{ stop }}" style="background:#fff;border-radius:16px;width:380px;overflow:hidden;box-shadow:var(--shadow-xl);animation:popIn .25s var(--ease-emphasized);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:12px;color:var(--fg-3);">ตรวจสอบสลิป · ห้อง {{ slipRoom.id }}</div><div style="font-size:18px;font-weight:700;">{{ slipRoom.name }}</div></div><button onClick="{{ closeSlip }}" style="background:var(--surface-sunken);border:none;width:32px;height:32px;border-radius:999px;font-size:16px;cursor:pointer;">✕</button></div>
+      <div style="padding:24px;">
+        <div style="background:var(--surface-sunken);border:1px dashed var(--border-default);border-radius:12px;padding:28px;text-align:center;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--fg-4)" stroke-width="1.5" style="margin:0 auto;"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v5"></path></svg>
+          <div style="font-size:13px;color:var(--fg-3);margin-top:10px;">สลิปโอนเงิน · {{ slipRoom.slipTime }}</div>
+          <div style="font-size:24px;font-weight:700;margin-top:6px;">{{ slipRoom.total }}</div>
+          <div style="font-size:12px;color:var(--fg-3);margin-top:2px;">ธนาคารกสิกรไทย · {{ slipRoom.slipRef }}</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button onClick="{{ slipRoom.onReject }}" style="flex:1;border:1.5px solid var(--border-default);background:#fff;border-radius:999px;padding:13px;font-weight:600;font-size:14px;cursor:pointer;color:var(--fg-2);">ปฏิเสธ</button>
+          <button onClick="{{ slipRoom.onVerify }}" style="flex:2;background:var(--ap-success);color:#fff;border:none;border-radius:999px;padding:13px;font-weight:600;font-size:14px;cursor:pointer;">ยืนยันการชำระ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ═══ TOAST ═══ -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="">
+  <div style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ap-ink-800);color:#fff;padding:13px 22px;border-radius:999px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);z-index:60;animation:toastIn .25s var(--ease-emphasized);display:flex;align-items:center;gap:10px;">
+    <span style="width:8px;height:8px;border-radius:999px;background:var(--ap-red-300);"></span>{{ toast }}
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1360,&quot;height&quot;:880},&quot;defaultDashboard&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;a&quot;,&quot;b&quot;],&quot;default&quot;:&quot;a&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;แดชบอร์ด&quot;},&quot;waterRate&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:18,&quot;min&quot;:10,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot;฿/หน่วย&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;อัตราค่าบริการ&quot;},&quot;elecRate&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:8,&quot;min&quot;:5,&quot;max&quot;:15,&quot;step&quot;:1,&quot;unit&quot;:&quot;฿/หน่วย&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;อัตราค่าบริการ&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const FIRST = ['สมชาย','สุนิสา','ธนพล','กมลชนก','ณัฐวุฒิ','ปิยะดา','วีรพล','อรอุมา','จิรายุ','พิมพ์ชนก','ศุภกร','นฤมล','ธีรภัทร','วรรณิศา','อนุชา','เบญจวรรณ','ก้องภพ','สุชานันท์','ภานุพงศ์','ชลิตา','ปฏิภาณ','กัญญารัตน์','ธนกฤต','มนัสนันท์'];
+    const LAST = ['ใจดี','แสงทอง','วัฒนกุล','ศรีสุข','บุญมี','พงษ์ไพบูลย์','รัตนพร','เจริญสุข','ทองคำ','อินทร์แก้ว'];
+    const MOVEIN = ['ม.ค. 68','มี.ค. 68','พ.ค. 68','ส.ค. 67','ต.ค. 67','ก.พ. 68','มิ.ย. 68','ธ.ค. 67'];
+    const types = [{name:'Studio',rent:4500},{name:'1 Bedroom',rent:6000},{name:'1BR Plus',rent:7500}];
+    let seed = 42;
+    const rnd = () => { seed = (seed*1103515245+12345) & 0x7fffffff; return seed/0x7fffffff; };
+    const rooms = [];
+    let ni = 0;
+    for (let f=1; f<=6; f++) {
+      const t = types[Math.floor((f-1)/2)];
+      for (let n=1; n<=8; n++) {
+        const id = `${f}${String(n).padStart(2,'0')}`;
+        const r = rnd();
+        let status = 'occupied';
+        if (r < 0.10) status = 'vacant';
+        else if (r < 0.145) status = 'maintenance';
+        const room = { id, floor:f, no:id, type:t.name, rent:t.rent, status };
+        if (status === 'occupied') {
+          const name = FIRST[ni % FIRST.length] + ' ' + LAST[Math.floor(rnd()*LAST.length)];
+          ni++;
+          const prevW = Math.floor(120 + rnd()*380);
+          const prevE = Math.floor(600 + rnd()*3200);
+          room.tenant = {
+            name,
+            phone: '08' + String(Math.floor(10000000 + rnd()*89999999)).slice(0,8).replace(/(\d{1})(\d{4})(\d{3})/,'$1-$2-$3'),
+            moveIn: MOVEIN[Math.floor(rnd()*MOVEIN.length)],
+            deposit: t.rent * 2,
+          };
+          const rr = rnd();
+          if (rr < 0.32) {
+            room.meter = { prevW, prevE, currW:null, currE:null };
+            room.billStatus = 'unread';
+          } else {
+            const uw = Math.floor(4 + rnd()*16);
+            const ue = Math.floor(90 + rnd()*260);
+            room.meter = { prevW, prevE, currW: prevW+uw, currE: prevE+ue };
+            const s2 = rr < 0.5 ? 'pending' : (rr < 0.74 ? 'unpaid' : 'paid');
+            room.billStatus = s2;
+            if (s2 === 'pending') { room.slip = true; room.slipTime = 'วันนี้ 09:1' + Math.floor(rnd()*9); room.slipRef = 'x' + Math.floor(1000+rnd()*8999); }
+            if (s2 === 'paid') room.paidDate = (2 + Math.floor(rnd()*6)) + ' ก.ค.';
+            if (s2 === 'unpaid') room.overdueDays = 2 + Math.floor(rnd()*8);
+          }
+        }
+        rooms.push(room);
+      }
+    }
+    const maintenance = [
+      { id:'m1', room:'204', title:'แอร์ไม่เย็น มีน้ำหยด', category:'เครื่องปรับอากาศ', reporter:'ผู้เช่า', date:'22 ก.ค.', prio:'ด่วน', status:'new' },
+      { id:'m2', room:'512', title:'ก๊อกน้ำห้องน้ำรั่ว', category:'ประปา', reporter:'ผู้เช่า', date:'21 ก.ค.', prio:'ปกติ', status:'new' },
+      { id:'m3', room:'108', title:'หลอดไฟทางเดินขาด', category:'ไฟฟ้า', reporter:'แม่บ้าน', date:'20 ก.ค.', prio:'ปกติ', status:'inprogress' },
+      { id:'m4', room:'306', title:'ประตูล็อกฝืด', category:'ทั่วไป', reporter:'ผู้เช่า', date:'19 ก.ค.', prio:'ปกติ', status:'inprogress' },
+      { id:'m5', room:'401', title:'เปลี่ยนเครื่องทำน้ำอุ่น', category:'ไฟฟ้า', reporter:'ผู้เช่า', date:'16 ก.ค.', prio:'ด่วน', status:'done' },
+      { id:'m6', room:'615', title:'ซ่อมมุ้งลวดหน้าต่าง', category:'ทั่วไป', reporter:'ผู้เช่า', date:'14 ก.ค.', prio:'ปกติ', status:'done' },
+    ];
+    this.state = {
+      page: (this.props.defaultDashboard === 'b' ? 'dashboard' : 'dashboard'),
+      dashLayout: this.props.defaultDashboard === 'b' ? 'b' : 'a',
+      rooms, maintenance,
+      toast: null, roomFilter: 'all', payFilter: 'all',
+      meterFilter: 'unread', drawer: null, slip: null,
+    };
+  }
+
+  // ── helpers ──
+  wRate() { return this.props.waterRate ?? 18; }
+  eRate() { return this.props.elecRate ?? 8; }
+  money(n) { return '฿' + Math.round(n).toLocaleString('en-US'); }
+  wUnits(r) { return (r.meter && r.meter.currW != null) ? (r.meter.currW - r.meter.prevW) : 0; }
+  eUnits(r) { return (r.meter && r.meter.currE != null) ? (r.meter.currE - r.meter.prevE) : 0; }
+  wAmt(r) { return this.wUnits(r) * this.wRate(); }
+  eAmt(r) { return this.eUnits(r) * this.eRate(); }
+  total(r) { return r.rent + this.wAmt(r) + this.eAmt(r); }
+
+  // ── actions ──
+  go(page) { this.setState({ page, drawer: null }); }
+  showToast(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: null }), 2800); }
+  setMeter(id, field, raw) {
+    const v = raw === '' ? null : Number(raw);
+    this.setState(s => ({ rooms: s.rooms.map(r => r.id === id ? { ...r, meter: { ...r.meter, [field]: v } } : r) }));
+  }
+  setStatus(id, billStatus, extra = {}) {
+    this.setState(s => ({ rooms: s.rooms.map(r => r.id === id ? { ...r, billStatus, ...extra } : r) }));
+  }
+  genBill(id) { this.setStatus(id, 'unpaid', { overdueDays: 0, slip: false }); this.showToast('สร้างบิลห้อง ' + id + ' เรียบร้อย'); }
+  recordCash(id) { this.setStatus(id, 'paid', { paidDate: 'วันนี้', slip: false }); this.showToast('บันทึกรับเงินสด ห้อง ' + id); }
+  remind(id) { const r = this.state.rooms.find(x => x.id === id); this.showToast('ส่งใบแจ้งเตือนไปยัง ' + (r && r.tenant ? r.tenant.name : 'ห้อง ' + id) + ' แล้ว'); }
+  verifySlip(id) { this.setStatus(id, 'paid', { paidDate: 'วันนี้', slip: false }); this.setState({ slip: null }); this.showToast('ยืนยันการชำระ ห้อง ' + id + ' แล้ว'); }
+  rejectSlip(id) { this.setStatus(id, 'unpaid', { slip: false, overdueDays: 0 }); this.setState({ slip: null }); this.showToast('ปฏิเสธสลิป ห้อง ' + id + ' — แจ้งผู้เช่าแล้ว'); }
+  setMaint(id, status) { this.setState(s => ({ maintenance: s.maintenance.map(m => m.id === id ? { ...m, status } : m) })); this.showToast('อัปเดตงานซ่อม ห้อง ' + (this.state.maintenance.find(m=>m.id===id)||{}).room); }
+
+  // ── style builders ──
+  chip(bg, color, extra) { return `display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap;background:${bg};color:${color};${extra||''}`; }
+  filterBtn(active) {
+    return active
+      ? 'border:none;background:var(--ap-ink-800);color:#fff;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;'
+      : 'border:1px solid var(--border-default);background:#fff;color:var(--fg-2);border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;';
+  }
+  tab(active) {
+    return active
+      ? 'border:none;background:#fff;color:var(--fg-1);border-radius:999px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:var(--shadow-xs);'
+      : 'border:none;background:transparent;color:var(--fg-3);border-radius:999px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;';
+  }
+  statusInfo(bs) {
+    if (bs === 'paid') return { label:'ชำระแล้ว', bg:'var(--ap-success-bg)', color:'var(--ap-success)' };
+    if (bs === 'pending') return { label:'รอตรวจสลิป', bg:'var(--ap-warning-bg)', color:'var(--ap-warning)' };
+    if (bs === 'unpaid') return { label:'ค้างชำระ', bg:'var(--ap-danger-bg)', color:'var(--ap-danger)' };
+    return { label:'ยังไม่จดมิเตอร์', bg:'var(--surface-sunken)', color:'var(--fg-3)' };
+  }
+
+  renderVals() {
+    const S = this.state;
+    const R = S.rooms;
+    const occ = R.filter(r => r.status === 'occupied');
+    const money = n => this.money(n);
+    const redHover = { background: 'var(--ap-red-700)' };
+    const ghostHover = { background: 'var(--action-ghost-hover)' };
+    const rowHover = { background: 'var(--surface-sunken)' };
+
+    // ── metrics ──
+    const total = R.length, occupied = occ.length;
+    const vacant = R.filter(r => r.status === 'vacant').length;
+    const maint = R.filter(r => r.status === 'maintenance').length;
+    const occRate = Math.round(occupied / total * 100);
+    const read = occ.filter(r => r.billStatus !== 'unread');
+    const unread = occ.length - read.length;
+    const paid = occ.filter(r => r.billStatus === 'paid');
+    const pending = occ.filter(r => r.billStatus === 'pending');
+    const unpaid = occ.filter(r => r.billStatus === 'unpaid');
+    const collected = paid.reduce((a,r) => a + this.total(r), 0);
+    const pendingAmt = pending.reduce((a,r) => a + this.total(r), 0);
+    const outstanding = unpaid.reduce((a,r) => a + this.total(r), 0);
+    const collRate = read.length ? Math.round(paid.length / read.length * 100) : 0;
+    const metrics = {
+      occupied, vacant, maint, occRate, unread, readDone: read.length,
+      collected: money(collected), pendingAmt: money(pendingAmt), outstanding: money(outstanding),
+      paidCount: paid.length, pendingCount: pending.length, unpaidCount: unpaid.length, collRate,
+    };
+
+    // ── nav ──
+    const navDef = [
+      { key:'dashboard', label:'แดชบอร์ด', icon:'M3 3h8v8H3z M13 3h8v8h-8z M3 13h8v8H3z M13 13h8v8h-8z' },
+      { key:'rooms', label:'ห้องพัก', icon:'M3 21h18 M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16 M15 21V9h4a2 2 0 0 1 2 2v10 M9 7h2 M9 11h2 M9 15h2', badge: (vacant+maint)>0 ? String(vacant+maint) : null, badgeType:'neutral' },
+      { key:'tenants', label:'ผู้เช่า / สัญญา', icon:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75' },
+      { key:'billing', label:'จดมิเตอร์ / บิล', icon:'M12 14l4-4 M3.34 19a10 10 0 1 1 17.32 0', badge: unread>0 ? String(unread) : null, badgeType:'warn' },
+      { key:'payments', label:'เก็บเงิน / สลิป', icon:'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1Z M8 7h8 M8 11h8 M8 15h5', badge: (unpaid.length+pending.length)>0 ? String(unpaid.length+pending.length) : null, badgeType:'red' },
+      { key:'reports', label:'รายงานการเงิน', icon:'M3 3v18h18 M7 16V9 M12 16V7 M17 16v-4' },
+      { key:'maintenance', label:'แจ้งซ่อม', icon:'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z', badge: String(S.maintenance.filter(m=>m.status!=='done').length), badgeType:'neutral' },
+    ];
+    const navItems = navDef.map(n => {
+      const active = S.page === n.key;
+      const base = 'display:flex;align-items:center;gap:12px;width:100%;border:none;border-radius:12px;padding:11px 12px;font-size:14px;font-weight:600;cursor:pointer;transition:background .12s;text-align:left;';
+      const bStyle = n.badgeType==='red' ? 'background:var(--ap-danger);color:#fff;' : n.badgeType==='warn' ? 'background:var(--ap-warning);color:#fff;' : 'background:var(--surface-sunken);color:var(--fg-2);';
+      return {
+        label: n.label, icon: n.icon, onClick: () => this.go(n.key),
+        badge: n.badge,
+        badgeStyle: (active ? 'background:rgba(41,37,36,.16);color:var(--ap-ink-900);' : bStyle) + 'font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 6px;',
+        style: base + (active ? 'background:var(--ap-red-600);color:var(--ap-ink-900);' : 'background:transparent;color:var(--fg-2);'),
+        hover: active ? { background: 'var(--ap-red-700)' } : { background: 'var(--action-ghost-hover)' },
+      };
+    });
+
+    const pageMetaMap = {
+      dashboard: { eyebrow:'ภาพรวม', title:'แดชบอร์ด' },
+      rooms: { eyebrow:'ผังห้อง', title:'ห้องพัก · 48 ห้อง' },
+      tenants: { eyebrow:'ทะเบียนผู้เช่า', title:'ผู้เช่า / สัญญาเช่า' },
+      billing: { eyebrow:'รอบบิล กรกฎาคม 2569', title:'จดมิเตอร์ & ออกบิล' },
+      payments: { eyebrow:'รอบบิล กรกฎาคม 2569', title:'เก็บเงิน / ตรวจสลิป' },
+      reports: { eyebrow:'การเงิน', title:'รายงาน & สรุปการเงิน' },
+      maintenance: { eyebrow:'งานบำรุงรักษา', title:'แจ้งซ่อม' },
+    };
+
+    // ── dashboard KPIs ──
+    const kpis = [
+      { label:'อัตราเข้าพัก', value: occRate + '%', delta: occupied + '/' + total + ' ห้องมีผู้เช่า', deltaColor:'var(--fg-3)', dotStyle:'width:9px;height:9px;border-radius:999px;background:var(--ap-success);' },
+      { label:'เก็บได้เดือนนี้', value: money(collected), delta:'▲ อัตราเก็บ ' + collRate + '%', deltaColor:'var(--ap-success)', dotStyle:'width:9px;height:9px;border-radius:999px;background:var(--ap-red-600);' },
+      { label:'ค้างชำระ', value: money(outstanding), delta: unpaid.length + ' ห้องต้องตาม', deltaColor:'var(--ap-danger)', dotStyle:'width:9px;height:9px;border-radius:999px;background:var(--ap-danger);' },
+      { label:'จดมิเตอร์ค้าง', value: String(unread), delta: unread>0 ? 'ยังไม่ออกบิล' : 'ครบแล้ว', deltaColor: unread>0?'var(--ap-warning)':'var(--ap-success)', dotStyle:'width:9px;height:9px;border-radius:999px;background:var(--ap-warning);' },
+    ];
+
+    // ── revenue bars (6 mo) ──
+    const revData = [
+      { month:'ก.พ.', short:money(214000), v:214000, out:26000 },
+      { month:'มี.ค.', short:money(228000), v:228000, out:19000 },
+      { month:'เม.ย.', short:money(221000), v:221000, out:31000 },
+      { month:'พ.ค.', short:money(239000), v:239000, out:15000 },
+      { month:'มิ.ย.', short:money(246000), v:246000, out:22000 },
+      { month:'ก.ค.', short:money(collected), v:collected, out: outstanding+pendingAmt },
+    ];
+    const maxRev = Math.max(...revData.map(d => d.v)) * 1.12;
+    const revBars = revData.map((d,i) => ({
+      month:d.month, short:d.short,
+      h: Math.round(d.v/maxRev*100) + '%',
+      hOut: Math.round(d.out/maxRev*100) + '%',
+      color: i===revData.length-1 ? 'var(--ap-red-600)' : 'var(--ap-red-200)',
+    }));
+    const avgRevenue = money(revData.reduce((a,d)=>a+d.v,0)/revData.length);
+
+    // ── donut ──
+    const p1 = occupied/total*100, p2 = (occupied+vacant)/total*100;
+    const donutBg = `conic-gradient(var(--ap-success) 0 ${p1}%, var(--ap-neutral-400) ${p1}% ${p2}%, var(--ap-warning) ${p2}% 100%)`;
+
+    // ── chase list (layout A) ──
+    const chaseSrc = [...unpaid, ...pending].sort((a,b)=>(b.overdueDays||0)-(a.overdueDays||0)).slice(0,5);
+    const chaseList = chaseSrc.map(r => ({
+      id:r.id, name:r.tenant.name, amount: money(this.total(r)),
+      statusLabel: r.billStatus==='pending' ? 'อัปโหลดสลิปแล้ว รอตรวจ' : 'เกินกำหนดชำระ',
+      overdue: r.billStatus==='pending' ? '' : (r.overdueDays||0) + ' วัน',
+      onRemind: () => this.remind(r.id),
+    }));
+
+    // ── activity feed ──
+    const activity = [
+      { text:'ห้อง 305 · โอนค่าเช่าเข้ามาแล้ว', time:'วันนี้ 09:14', color:'var(--ap-success)' },
+      { text:'ห้อง 204 · แจ้งซ่อมแอร์ไม่เย็น', time:'วันนี้ 08:40', color:'var(--ap-warning)' },
+      { text:'จดมิเตอร์ชั้น 2 ครบแล้ว', time:'เมื่อวาน 17:22', color:'var(--ap-red-600)' },
+      { text:'ห้อง 512 · ครบกำหนดสัญญาใน 30 วัน', time:'เมื่อวาน 11:05', color:'var(--fg-3)' },
+      { text:'ห้อง 401 · ปิดงานซ่อมน้ำอุ่นแล้ว', time:'2 วันก่อน', color:'var(--ap-success)' },
+    ];
+
+    // ── worklists (layout B) ──
+    const meterTodo = occ.filter(r => r.billStatus === 'unread');
+    const payTodo = [...unpaid, ...pending].sort((a,b)=>(b.overdueDays||0)-(a.overdueDays||0));
+    const fixTodo = S.maintenance.filter(m => m.status !== 'done');
+    const worklists = [
+      {
+        title:'จดมิเตอร์', sub:'รอบ ก.ค. · ค้าง ' + meterTodo.length + ' ห้อง',
+        icon:'M12 14l4-4 M3.34 19a10 10 0 1 1 17.32 0', iconBg:'var(--ap-warning-bg)', iconColor:'var(--ap-warning)',
+        count: meterTodo.length, countBg:'var(--ap-warning-bg)', countColor:'var(--ap-warning)',
+        action:'จดเลย', empty: meterTodo.length===0,
+        btnStyle:'border:1px solid var(--ap-warning);background:#fff;color:var(--ap-warning);border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;',
+        btnHover:{ background:'var(--ap-warning-bg)' },
+        items: meterTodo.map(r => ({ tag:r.id, title:r.tenant.name, sub: r.type, onAction: () => this.go('billing') })),
+      },
+      {
+        title:'ตามเก็บเงิน', sub:'ค้าง + รอตรวจ ' + payTodo.length + ' ห้อง',
+        icon:'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1Z M8 7h8 M8 11h8', iconBg:'var(--ap-danger-bg)', iconColor:'var(--ap-danger)',
+        count: payTodo.length, countBg:'var(--ap-danger-bg)', countColor:'var(--ap-danger)',
+        action:'ทวงถาม', empty: payTodo.length===0,
+        btnStyle:'border:1px solid var(--ap-red-600);background:#fff;color:var(--ap-red-600);border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;',
+        btnHover:{ background:'var(--ap-red-50)' },
+        items: payTodo.map(r => ({ tag:r.id, title: money(this.total(r)), sub: r.billStatus==='pending'?'รอตรวจสลิป':'ค้าง '+(r.overdueDays||0)+' วัน', onAction: () => this.remind(r.id) })),
+      },
+      {
+        title:'งานซ่อม', sub: fixTodo.length + ' งานรอดำเนินการ',
+        icon:'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z', iconBg:'var(--ap-info-bg)', iconColor:'var(--ap-info)',
+        count: fixTodo.length, countBg:'var(--ap-info-bg)', countColor:'var(--ap-info)',
+        action:'ดูงาน', empty: fixTodo.length===0,
+        btnStyle:'border:1px solid var(--border-default);background:#fff;color:var(--fg-2);border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;',
+        btnHover:{ background:'var(--surface-sunken)' },
+        items: fixTodo.map(m => ({ tag:m.room, title:m.title, sub: m.category + ' · ' + m.date, onAction: () => this.go('maintenance') })),
+      },
+    ];
+
+    // ── rooms page ──
+    const roomStatusInfo = {
+      occupied: { label:'เข้าพัก', dot:'var(--ap-success)', bg:'#fff' },
+      vacant: { label:'ว่าง', dot:'var(--ap-neutral-400)', bg:'var(--surface-sunken)' },
+      maintenance: { label:'ปรับปรุง', dot:'var(--ap-warning)', bg:'var(--ap-warning-bg)' },
+    };
+    const rf = S.roomFilter;
+    const roomFilters = [
+      { k:'all', label:'ทั้งหมด', count: R.length },
+      { k:'occupied', label:'เข้าพัก', count: occupied },
+      { k:'vacant', label:'ว่าง', count: vacant },
+      { k:'maintenance', label:'ปรับปรุง', count: maint },
+    ].map(f => ({ label:f.label, count:f.count, onClick: () => this.setState({ roomFilter:f.k }), style: this.filterBtn(rf===f.k) }));
+    const filtered = R.filter(r => rf==='all' || r.status===rf);
+    const floorsMap = {};
+    filtered.forEach(r => { (floorsMap[r.floor] = floorsMap[r.floor] || []).push(r); });
+    const floorTypes = { 1:'Studio', 2:'Studio', 3:'1 Bedroom', 4:'1 Bedroom', 5:'1BR Plus', 6:'1BR Plus' };
+    const floors = Object.keys(floorsMap).sort().map(f => ({
+      floor:f, type: floorTypes[f],
+      rooms: floorsMap[f].map(r => {
+        const si = roomStatusInfo[r.status];
+        return {
+          id:r.id, sub: r.status==='occupied' ? r.tenant.name : si.label,
+          cardStyle: `position:relative;background:${si.bg};border:1px solid var(--border-subtle);border-radius:12px;padding:14px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;transition:transform .12s,box-shadow .12s;`,
+          cardHover: { transform:'translateY(-3px)', boxShadow:'var(--shadow-md)' },
+          badgeStyle: `position:absolute;top:11px;right:11px;width:9px;height:9px;border-radius:999px;background:${si.dot};`,
+          onClick: () => this.setState({ drawer: r.id }),
+        };
+      }),
+    }));
+
+    // ── tenants ──
+    const avatarColors = ['var(--ap-red-600)','var(--ap-ink-700)','var(--ap-info)','var(--ap-red-400)','var(--ap-success)','var(--ap-warning)'];
+    const tenantRows = occ.map((r,i) => {
+      const si = this.statusInfo(r.billStatus);
+      return {
+        id:r.id, name:r.tenant.name, initial:r.tenant.name.charAt(0), phone:r.tenant.phone,
+        moveIn:r.tenant.moveIn, rent: money(r.rent),
+        avatarBg: avatarColors[i % avatarColors.length],
+        statusLabel: si.label, statusStyle: this.chip(si.bg, si.color),
+        onClick: () => this.setState({ drawer: r.id }),
+      };
+    });
+
+    // ── meter rows ──
+    const mf = S.meterFilter;
+    const meterSrc = occ.filter(r => mf==='all' || r.billStatus==='unread');
+    const meterRows = meterSrc.map(r => {
+      const hasBoth = r.meter.currW != null && r.meter.currE != null;
+      const valid = hasBoth && r.meter.currW > r.meter.prevW && r.meter.currE >= r.meter.prevE;
+      const billed = r.billStatus !== 'unread';
+      const genLabel = billed ? 'ออกบิลแล้ว' : 'สร้างบิล';
+      const genDisabled = !valid || billed;
+      return {
+        id:r.id, name:r.tenant.name, prevW:r.meter.prevW, prevE:r.meter.prevE,
+        currW: r.meter.currW == null ? '' : r.meter.currW,
+        currE: r.meter.currE == null ? '' : r.meter.currE,
+        unitsLabel: hasBoth ? ('น้ำ '+this.wUnits(r)+' · ไฟ '+this.eUnits(r)) : '—',
+        total: hasBoth ? money(this.total(r)) : '—',
+        onW: (e) => this.setMeter(r.id, 'currW', e.target.value),
+        onE: (e) => this.setMeter(r.id, 'currE', e.target.value),
+        onGen: () => this.genBill(r.id),
+        genLabel, genDisabled,
+        genStyle: genDisabled
+          ? 'border:none;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;background:var(--surface-sunken);color:var(--fg-4);cursor:not-allowed;white-space:nowrap;'
+          : 'border:none;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:700;background:var(--ap-red-600);color:var(--ap-ink-900);cursor:pointer;white-space:nowrap;',
+      };
+    });
+
+    // ── payments ──
+    const pf = S.payFilter;
+    const payFilters = [
+      { k:'all', label:'ทั้งหมด', count: read.length },
+      { k:'unpaid', label:'ค้างชำระ', count: unpaid.length },
+      { k:'pending', label:'รอตรวจสลิป', count: pending.length },
+      { k:'paid', label:'ชำระแล้ว', count: paid.length },
+    ].map(f => ({ label:f.label, count:f.count, onClick: () => this.setState({ payFilter:f.k }), style: this.filterBtn(pf===f.k) }));
+    const paySrc = read.filter(r => pf==='all' || r.billStatus===pf);
+    const outlineBtn = 'border:1px solid var(--border-default);background:#fff;color:var(--fg-2);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;';
+    const redBtn = 'border:none;background:var(--ap-red-600);color:var(--ap-ink-900);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;';
+    const warnBtn = 'border:none;background:var(--ap-warning);color:#fff;border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;';
+    const payRows = paySrc.map(r => {
+      const si = this.statusInfo(r.billStatus);
+      let actions = [];
+      if (r.billStatus === 'unpaid') actions = [
+        { label:'ทวงถาม', style: outlineBtn, hover: ghostHover, onClick: () => this.remind(r.id) },
+        { label:'รับเงินสด', style: redBtn, hover: redHover, onClick: () => this.recordCash(r.id) },
+      ];
+      else if (r.billStatus === 'pending') actions = [
+        { label:'ดู & ยืนยันสลิป', style: warnBtn, hover: { background:'#9c6614' }, onClick: () => this.setState({ slip: r.id }) },
+      ];
+      else actions = [ { label:'ใบเสร็จ', style: outlineBtn, hover: ghostHover, onClick: () => this.showToast('ออกใบเสร็จ ห้อง '+r.id+' แล้ว') } ];
+      const meta = r.billStatus==='paid' ? ('ชำระ '+(r.paidDate||'')) : r.billStatus==='pending' ? 'อัปโหลดสลิปแล้ว' : ('เกิน '+(r.overdueDays||0)+' วัน');
+      return {
+        id:r.id, name:r.tenant.name,
+        breakdown: 'ค่าเช่า '+money(r.rent)+' + น้ำ '+money(this.wAmt(r))+' + ไฟ '+money(this.eAmt(r)),
+        total: money(this.total(r)), meta,
+        metaColor: r.billStatus==='paid'?'var(--ap-success)':r.billStatus==='unpaid'?'var(--ap-danger)':'var(--fg-3)',
+        statusLabel: si.label, statusStyle: this.chip(si.bg, si.color, 'min-width:96px;justify-content:center;'),
+        actions,
+      };
+    });
+
+    // ── reports ──
+    const reportStats = [
+      { label:'รายรับรวม ก.ค.', value: money(collected+pendingAmt), sub:'เก็บแล้ว + รอตรวจ' },
+      { label:'อัตราการเก็บเงิน', value: collRate+'%', sub: paid.length+'/'+read.length+' ห้องชำระแล้ว' },
+      { label:'รายรับเฉลี่ย/ห้อง', value: money(occupied? (collected+pendingAmt+outstanding)/occupied : 0), sub:'รวมค่าน้ำค่าไฟ' },
+      { label:'ยอดค้างสะสม', value: money(outstanding), sub: unpaid.length+' ห้อง' },
+    ];
+    const rentSum = occ.reduce((a,r)=>a+r.rent,0);
+    const waterSum = read.reduce((a,r)=>a+this.wAmt(r),0);
+    const elecSum = read.reduce((a,r)=>a+this.eAmt(r),0);
+    const incTot = rentSum+waterSum+elecSum || 1;
+    const ip1 = rentSum/incTot*100, ip2 = (rentSum+waterSum)/incTot*100;
+    const incomeDonut = `conic-gradient(var(--ap-red-600) 0 ${ip1}%, var(--ap-info) ${ip1}% ${ip2}%, var(--ap-warning) ${ip2}% 100%)`;
+    const incomeLegend = [
+      { label:'ค่าเช่า', value: money(rentSum), color:'var(--ap-red-600)' },
+      { label:'ค่าน้ำ', value: money(waterSum), color:'var(--ap-info)' },
+      { label:'ค่าไฟ', value: money(elecSum), color:'var(--ap-warning)' },
+    ];
+
+    // ── maintenance ──
+    const prioStyle = p => p==='ด่วน' ? this.chip('var(--ap-danger-bg)','var(--ap-danger)') : this.chip('var(--surface-sunken)','var(--fg-3)');
+    const buildJob = m => {
+      let actions = [];
+      if (m.status==='new') actions = [{ label:'เริ่มดำเนินการ', style:'border:1px solid var(--border-default);background:#fff;color:var(--fg-1);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;', onClick: () => this.setMaint(m.id,'inprogress') }];
+      else if (m.status==='inprogress') actions = [{ label:'ปิดงาน ✓', style:'border:none;background:var(--ap-success);color:#fff;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;', onClick: () => this.setMaint(m.id,'done') }];
+      else actions = [{ label:'เปิดใหม่', style:'border:1px solid var(--border-default);background:#fff;color:var(--fg-3);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;', onClick: () => this.setMaint(m.id,'inprogress') }];
+      return { room:m.room, title:m.title, prio:m.prio, prioStyle: prioStyle(m.prio), meta: m.category+' · แจ้งโดย'+m.reporter+' · '+m.date, actions };
+    };
+    const maintCols = [
+      { title:'รอรับเรื่อง', dot:'var(--ap-danger)', status:'new' },
+      { title:'กำลังดำเนินการ', dot:'var(--ap-warning)', status:'inprogress' },
+      { title:'เสร็จสิ้น', dot:'var(--ap-success)', status:'done' },
+    ].map(c => {
+      const items = S.maintenance.filter(m => m.status===c.status).map(buildJob);
+      return { title:c.title, dot:c.dot, count:items.length, items, empty: items.length===0 };
+    });
+
+    // ── drawer ──
+    let drawerRoom = null;
+    if (S.drawer) {
+      const r = R.find(x => x.id === S.drawer);
+      if (r) {
+        const si = roomStatusInfo[r.status];
+        const isOcc = r.status === 'occupied';
+        drawerRoom = {
+          id:r.id, type:r.type, rentLabel: money(r.rent),
+          headBg: isOcc ? 'var(--ap-red-600)' : 'var(--ap-ink-800)', headColor: isOcc ? 'var(--ap-ink-900)' : '#fff',
+          statusLabel: si.label,
+          statusChip: `display:inline-flex;margin-top:16px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;background:${isOcc?'rgba(41,37,36,.14)':'rgba(255,255,255,.18)'};color:${isOcc?'var(--ap-ink-900)':'#fff'};`,
+          hasTenant: isOcc, isVacant: !isOcc,
+          onAnnounce: () => { this.showToast('ประกาศห้อง '+r.id+' ลงเว็บแล้ว'); },
+        };
+        if (isOcc) {
+          Object.assign(drawerRoom, {
+            initial: r.tenant.name.charAt(0), tenantName: r.tenant.name,
+            avatarBg: 'var(--ap-ink-700)', moveIn: r.tenant.moveIn, phone: r.tenant.phone,
+            deposit: money(r.tenant.deposit),
+            waterUnits: this.wUnits(r)+' หน่วย', elecUnits: this.eUnits(r)+' หน่วย',
+            waterAmt: money(this.wAmt(r)), elecAmt: money(this.eAmt(r)), billTotal: money(this.total(r)),
+            onRemind: () => this.remind(r.id),
+          });
+        }
+      }
+    }
+
+    // ── slip modal ──
+    let slipRoom = null;
+    if (S.slip) {
+      const r = R.find(x => x.id === S.slip);
+      if (r && r.tenant) slipRoom = {
+        id:r.id, name:r.tenant.name, total: money(this.total(r)),
+        slipTime: r.slipTime || 'วันนี้', slipRef: 'อ้างอิง '+(r.slipRef||'x0000'),
+        onVerify: () => this.verifySlip(r.id), onReject: () => this.rejectSlip(r.id),
+      };
+    }
+
+    return {
+      navItems, pageMeta: pageMetaMap[S.page] || pageMetaMap.dashboard, metrics,
+      isDashboard: S.page==='dashboard', isRooms: S.page==='rooms', isTenants: S.page==='tenants',
+      isBilling: S.page==='billing', isPayments: S.page==='payments', isReports: S.page==='reports', isMaintenance: S.page==='maintenance',
+      layoutA: S.dashLayout==='a', layoutB: S.dashLayout==='b',
+      setLayoutA: () => this.setState({ dashLayout:'a' }), setLayoutB: () => this.setState({ dashLayout:'b' }),
+      tabAStyle: this.tab(S.dashLayout==='a'), tabBStyle: this.tab(S.dashLayout==='b'),
+      kpis, revBars, avgRevenue, donutBg, chaseList, activity, worklists,
+      goPayments: () => this.go('payments'),
+      roomFilters, floors,
+      tenantRows,
+      meterRows, waterRateLabel: '฿'+this.wRate(), elecRateLabel: '฿'+this.eRate(),
+      setMeterUnread: () => this.setState({ meterFilter:'unread' }), setMeterAll: () => this.setState({ meterFilter:'all' }),
+      meterTabUnread: this.tab(mf==='unread'), meterTabAll: this.tab(mf==='all'),
+      payFilters, payRows,
+      reportStats, incomeDonut, incomeLegend,
+      maintCols,
+      drawerRoom, slipRoom,
+      closeDrawer: () => this.setState({ drawer:null }), closeSlip: () => this.setState({ slip:null }),
+      stop: (e) => e.stopPropagation(),
+      toast: S.toast, redHover, ghostHover, rowHover,
+    };
+  }
+}
+</script>
+</body>
+</html>
