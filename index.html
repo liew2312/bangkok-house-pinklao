@@ -1371,7 +1371,13 @@
 
       <div class="g-card mb-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <div class="form-section-title" style="margin:0;"><i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i> ห้องที่ใช้น้ำ/ไฟผิดปกติ</div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="form-section-title" style="margin:0;"><i class="fa-solid fa-table-list" style="color:#1d4ed8;"></i> ภาพรวมทุกห้อง</div>
+            <div class="g-tabs" style="margin:0;">
+              <button type="button" class="g-tab active" id="rh-f-all" onclick="rhSetFilter('all')">ทุกห้อง <span id="rh-c-all"></span></button>
+              <button type="button" class="g-tab" id="rh-f-bad" onclick="rhSetFilter('bad')">⚠ เฉพาะผิดปกติ <span id="rh-c-bad"></span></button>
+            </div>
+          </div>
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <span style="font-size:0.82rem;color:#64748b;font-weight:600;">รอบบิล</span>
             <select id="rh-ov-month" class="g-select" style="width:auto;padding-top:6px;padding-bottom:6px;" onchange="renderRoomAnomalyOverview()"></select>
@@ -1383,10 +1389,10 @@
             </select>
           </div>
         </div>
-        <p style="font-size:0.78rem;color:#64748b;margin:0 0 10px;"><i class="fa-solid fa-circle-info me-1"></i>เฉพาะห้องที่มีคนพัก · "ปกติ" = ค่ากลาง (median) ของหน่วยที่ห้องนั้นใช้ในเดือนอื่นๆ ช่วง 12 เดือนล่าสุด · แจ้งเมื่อต่างกันอย่างน้อย 5 หน่วย (น้ำ) / 50 หน่วย (ไฟ) · เลขมิเตอร์ลดลงจะถูกแจ้งว่าอาจจดผิด</p>
-        <div class="g-table-wrap" style="max-height:320px;overflow-y:auto;">
+        <p style="font-size:0.78rem;color:#64748b;margin:0 0 10px;"><i class="fa-solid fa-circle-info me-1"></i>คลิกแถวเพื่อดูประวัติห้องนั้น · ตรวจความผิดปกติเฉพาะห้องที่มีคนพัก · "ปกติ" = ค่ากลาง (median) ของหน่วยที่ห้องนั้นใช้ในเดือนอื่นๆ ช่วง 12 เดือนล่าสุด · แจ้งเมื่อต่างกันอย่างน้อย 5 หน่วย (น้ำ) / 50 หน่วย (ไฟ) · เลขมิเตอร์ลดลงจะถูกแจ้งว่าอาจจดผิด</p>
+        <div class="g-table-wrap" style="max-height:420px;overflow-y:auto;">
           <table class="g-table">
-            <thead><tr><th>ห้อง</th><th>ผู้เช่า</th><th style="text-align:right">น้ำ (หน่วย)</th><th style="text-align:right">ไฟ (หน่วย)</th><th>ข้อสังเกต</th><th></th></tr></thead>
+            <thead><tr><th>ห้อง</th><th>ผู้เช่า</th><th style="text-align:right">ค่าเช่า</th><th style="text-align:right">น้ำ (หน่วย)</th><th style="text-align:right">ไฟ (หน่วย)</th><th style="text-align:right">ยอดบิล</th><th style="text-align:center">สถานะ</th><th>ข้อสังเกต</th></tr></thead>
             <tbody id="rh-ov-list"></tbody>
           </table>
         </div>
@@ -1408,6 +1414,13 @@
         </div>
         <div id="rh-notes"></div>
         <div class="row g-3 mb-3" id="rh-tiles"></div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+          <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2" style="margin-bottom:6px;">
+            <div style="font-weight:700;font-size:0.9rem;">ยอดบิลรายเดือน (บาท) — แยกค่าเช่า / ค่าไฟ / ค่าน้ำ / อื่นๆ</div>
+            <div id="rh-bill-sum" style="font-size:0.8rem;color:#475569;"></div>
+          </div>
+          <div style="position:relative;height:260px;"><canvas id="rh-chart-bill" aria-label="กราฟยอดบิลรายเดือนแยกตามรายการ" role="img"></canvas></div>
+        </div>
         <div class="row g-3 mb-3">
           <div class="col-md-6"><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;">
             <div style="font-weight:700;font-size:0.9rem;margin-bottom:6px;">หน่วยน้ำต่อเดือน</div>
@@ -3517,23 +3530,45 @@
 
   function rhSens(){ var e=document.getElementById('rh-sens'); return e ? (parseFloat(e.value)||1) : 1; }
 
+  var _rhFilter='all';
+  function rhSetFilter(f){
+    _rhFilter=f;
+    var a=document.getElementById('rh-f-all'), b=document.getElementById('rh-f-bad');
+    if(a) a.classList.toggle('active', f==='all'); if(b) b.classList.toggle('active', f==='bad');
+    renderRoomAnomalyOverview();
+  }
   function renderRoomAnomalyOverview(){
     var body=document.getElementById('rh-ov-list'); if(!body) return;
     var m=(document.getElementById('rh-ov-month')||{}).value; if(!m){ body.innerHTML=''; return; }
-    var sens=rhSens(), out=[];
+    var sens=rhSens(), all=[], badN=0;
     sortByRoomNo(raw.tenants||[]).forEach(function(t){
-      if(!t||!t.room||t.status!=='มีคนพัก'||!rhHist(t.room,m)) return; // เฉพาะห้องที่มีคนพัก
-      var rows=rhAnalyzeRoom(t.room, 12, sens);
-      var row=null; for(var i=0;i<rows.length;i++){ if(rows[i].month===m){ row=rows[i]; break; } }
-      if(!row) return;
-      var bad=row.flags.filter(function(f){ return f.lv!=='info'; });
-      if(!bad.length) return;
-      out.push('<tr><td><b>'+rhEsc(t.room)+'</b></td><td style="color:#475569;">'+rhEsc(t.name||'-')+'</td>'
-        +'<td style="text-align:right;">'+row.b.wUnits+'</td><td style="text-align:right;">'+row.b.eUnits+'</td>'
-        +'<td>'+rhFlagChips(bad)+'</td>'
-        +'<td style="text-align:right;"><button class="g-btn g-btn-sm" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;" onclick="rhOpenRoom(\''+rhEsc(t.room)+'\')">ดูประวัติ</button></td></tr>');
+      if(!t||!t.room) return;
+      var h=rhHist(t.room,m); if(!h) return;
+      var occ=(t.status==='มีคนพัก');
+      var row=null;
+      if(occ){ var rows=rhAnalyzeRoom(t.room, 12, sens); for(var i=0;i<rows.length;i++){ if(rows[i].month===m){ row=rows[i]; break; } } }
+      var b=row ? row.b : calcRoomBill(t.room,m); if(!b) return;
+      var bad=row ? row.flags.filter(function(f){ return f.lv!=='info'; }) : [];
+      if(bad.length) badN++;
+      all.push({t:t, b:b, h:h, occ:occ, bad:bad, flags:row?row.flags:[], lv: row?row.level:'ok'});
     });
-    body.innerHTML = out.length ? out.join('') : '<tr><td colspan="6" style="text-align:center;padding:18px;color:#16a34a;font-weight:700;"><i class="fa-solid fa-circle-check me-1"></i>ไม่พบห้องที่ใช้น้ำ/ไฟผิดปกติในรอบบิลนี้</td></tr>';
+    var ca=document.getElementById('rh-c-all'), cb=document.getElementById('rh-c-bad');
+    if(ca) ca.innerText='('+all.length+')'; if(cb) cb.innerText='('+badN+')';
+    var list = _rhFilter==='bad' ? all.filter(function(x){ return x.bad.length; }) : all;
+    if(!list.length){ body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:18px;color:#16a34a;font-weight:700;"><i class="fa-solid fa-circle-check me-1"></i>'+(_rhFilter==='bad'?'ไม่พบห้องที่ใช้น้ำ/ไฟผิดปกติในรอบบิลนี้':'ไม่มีข้อมูลบิลในรอบนี้')+'</td></tr>'; return; }
+    body.innerHTML = list.map(function(x){
+      var b=x.b, paid=(x.h.payStatus==='ชำระแล้ว');
+      var bg = x.lv==='crit' ? 'background:#fef2f2;' : x.bad.length ? 'background:#fffbeb;' : '';
+      var name = x.occ ? rhEsc(x.t.name||'-') : '<span style="color:#94a3b8;">'+rhEsc(x.t.status||'ห้องว่าง')+'</span>';
+      var note = !b.hasPrev ? '<span style="color:#94a3b8;font-size:0.75rem;">เลขมิเตอร์เริ่มต้น</span>' : (x.bad.length ? rhFlagChips(x.bad) : (x.occ ? '<span style="color:#16a34a;font-size:0.78rem;font-weight:700;">✔ ปกติ</span>' : '<span style="color:#94a3b8;font-size:0.78rem;">-</span>'));
+      return '<tr style="cursor:pointer;'+bg+'" title="ดูประวัติห้อง '+rhEsc(x.t.room)+'" onclick="rhOpenRoom(\''+rhEsc(x.t.room)+'\')">'
+        +'<td><b>'+rhEsc(x.t.room)+'</b></td><td style="color:#475569;">'+name+'</td>'
+        +'<td style="text-align:right;">'+rhFmt(b.rent)+'</td>'
+        +'<td style="text-align:right;">'+(b.hasPrev?b.wUnits:'-')+'</td><td style="text-align:right;">'+(b.hasPrev?b.eUnits:'-')+'</td>'
+        +'<td style="text-align:right;font-weight:700;">'+(b.hasPrev?rhFmt(b.total):'-')+'</td>'
+        +'<td style="text-align:center;">'+(paid?'<span class="g-badge badge-success">ชำระแล้ว</span>':'<span class="g-badge badge-danger">ค้างชำระ</span>')+'</td>'
+        +'<td>'+note+'</td></tr>';
+    }).join('');
   }
 
   function rhOpenRoom(room){
@@ -3570,6 +3605,38 @@
     });
   }
 
+  // กราฟแท่งซ้อน: ยอดบิลแต่ละเดือน แยกส่วน (ค่าเช่า / ค่าไฟ / ค่าน้ำ / อื่นๆ = ส่วนกลาง+ค่าปรับ+ปรับยอด)
+  function rhDrawBillChart(rows){
+    if(typeof Chart==='undefined') return;
+    var el=document.getElementById('rh-chart-bill'); if(!el) return;
+    if(_rhCharts['rh-chart-bill']){ _rhCharts['rh-chart-bill'].destroy(); delete _rhCharts['rh-chart-bill']; }
+    var rr=rows.filter(function(r){ return r.b.hasPrev; });
+    var labels=rr.map(function(r){ return rhShortLabel(r.month); });
+    var parts=[
+      { label:'ค่าเช่า', color:'#2a78d6', get:function(b){ return b.rent; } },
+      { label:'ค่าไฟ',   color:'#eb6834', get:function(b){ return b.eBill; } },
+      { label:'ค่าน้ำ',   color:'#1baf7a', get:function(b){ return b.wBill; } },
+      { label:'อื่นๆ (ส่วนกลาง/ค่าปรับ/ปรับยอด)', color:'#eda100', get:function(b){ return Math.max(0, b.total - b.rent - b.eBill - b.wBill); } }
+    ];
+    var ds=parts.map(function(p){ return { label:p.label, data:rr.map(function(r){ return Math.round(p.get(r.b)*100)/100; }), backgroundColor:p.color, borderColor:'#f8fafc', borderWidth:{top:2}, borderSkipped:'bottom', maxBarThickness:34, stack:'bill' }; });
+    var sumEl=document.getElementById('rh-bill-sum');
+    if(sumEl){
+      var tot=rr.map(function(r){ return r.b.total; });
+      if(tot.length){ var avg=tot.reduce(function(a,c){return a+c;},0)/tot.length, mx=Math.max.apply(null,tot), mn=Math.min.apply(null,tot);
+        sumEl.innerHTML='เฉลี่ย <b>฿'+rhFmt(Math.round(avg))+'</b>/เดือน · ต่ำสุด ฿'+rhFmt(mn)+' · สูงสุด ฿'+rhFmt(mx); } else sumEl.innerHTML='';
+    }
+    _rhCharts['rh-chart-bill']=new Chart(el.getContext('2d'), { type:'bar', data:{ labels:labels, datasets:ds },
+      options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+        plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:12, boxHeight:12, font:{family:'Noto Sans Thai', size:12}, color:'#334155' } },
+          tooltip:{ titleFont:{family:'Noto Sans Thai'}, bodyFont:{family:'Noto Sans Thai'}, footerFont:{family:'Noto Sans Thai'}, padding:10, cornerRadius:8,
+            filter:function(c){ return c.parsed.y>0; },
+            callbacks:{ label:function(c){ return c.dataset.label+': ฿'+rhFmt(c.parsed.y); },
+              footer:function(items){ var r=rr[items[0].dataIndex]; return r ? 'รวม ฿'+rhFmt(r.b.total)+(r.h&&r.h.payStatus==='ชำระแล้ว'?' (ชำระแล้ว)':' (ค้างชำระ)') : ''; } } } },
+        scales:{ x:{ stacked:true, grid:{display:false}, ticks:{ font:{family:'Noto Sans Thai', size:11}, color:'#64748b' } },
+          y:{ stacked:true, beginAtZero:true, grid:{ color:'#eef2f7' }, border:{display:false}, ticks:{ font:{size:11}, color:'#64748b', callback:function(v){ return '฿'+rhFmt(v); } } } } }
+    });
+  }
+
   function renderRoomHistory(){
     var sel=document.getElementById('rh-room'); if(!sel||!sel.value) return;
     var room=sel.value, rangeN=parseInt((document.getElementById('rh-range')||{}).value||'12',10)||0;
@@ -3595,9 +3662,11 @@
       + rhTile('ไฟ (ค่ากลาง)', (medE===null?'-':rhFmt(medE))+' <span style="font-size:0.8rem;font-weight:600;color:#64748b;">หน่วย/เดือน</span>', withPrev.length+' เดือนที่เทียบได้')
       + rhTile('เดือนที่ผิดปกติ', badMonths+' <span style="font-size:0.8rem;font-weight:600;color:#64748b;">จาก '+rows.length+' เดือน</span>', badMonths?'⚠ ดูรายละเอียดในตาราง':'✔ ไม่พบความผิดปกติ', badMonths?'#d97706':'#16a34a');
     // กราฟ
-    var labels=rows.map(function(r){return rhShortLabel(r.month);});
-    rhDrawChart('rh-chart-w', labels, rows.map(function(r){return r.b.hasPrev ? r.b.wUnits : null;}), medW, rows.map(function(r){return r.levelW;}), 'น้ำ', rows, 'w');
-    rhDrawChart('rh-chart-e', labels, rows.map(function(r){return r.b.hasPrev ? r.b.eUnits : null;}), medE, rows.map(function(r){return r.levelE;}), 'ไฟ', rows, 'e');
+    rhDrawBillChart(rows);
+    var cr=rows.filter(function(r){ return r.b.hasPrev; }); // เดือนเลขเริ่มต้นไม่ใช่การใช้จริง ไม่แสดงในกราฟ
+    var labels=cr.map(function(r){return rhShortLabel(r.month);});
+    rhDrawChart('rh-chart-w', labels, cr.map(function(r){return r.b.wUnits;}), medW, cr.map(function(r){return r.levelW;}), 'น้ำ', cr, 'w');
+    rhDrawChart('rh-chart-e', labels, cr.map(function(r){return r.b.eUnits;}), medE, cr.map(function(r){return r.levelE;}), 'ไฟ', cr, 'e');
     // ตาราง (ใหม่ → เก่า)
     var body=document.getElementById('rh-list'); if(!body) return;
     if(!rows.length){ body.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:#64748b;">ยังไม่มีข้อมูลบิลของห้องนี้</td></tr>'; return; }
