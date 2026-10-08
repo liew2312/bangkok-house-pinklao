@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -508,144 +508,6 @@
       .g-table { min-width: 600px; }
       .g-table-wrap, .scrollable-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     }
-  </style>
-  <style id="theme-pop">
-/* ===== THEME: POP (สีสด ตัวหนังสือหนา ขอบดำชัด) ===== */
-:root{
-  --pop-ink:#111111; --pop-ink-2:#2b2b2b; --pop-muted:#555555;
-  --pop-paper:#FFF7E8; --pop-card:#FFFFFF; --pop-line:#111111;
-  --pop-lime:#D4FF4F; --pop-mint:#7CF0C5; --pop-lav:#C9B6FF; --pop-yellow:#FFD84D;
-  --pop-sky:#8FE3FF; --pop-pink:#FF9FCF; --pop-orange:#FF8A4C; --pop-red:#FF5C5C;
-  --pop-shadow:4px 4px 0 #111111; --pop-shadow-sm:3px 3px 0 #111111;
-  --pop-display:'Kanit','Noto Sans Thai',system-ui,sans-serif;
-  --pop-body:'Noto Sans Thai','Kanit',system-ui,sans-serif;
-}
-body{ background:var(--pop-paper)!important; color:var(--pop-ink)!important; font-family:var(--pop-body)!important; font-size:15px; font-weight:500; }
-h1,h2,h3,h4,h5,.modal-title,.form-section-title,.page-header h3,.logo-text{ font-family:var(--pop-display)!important; letter-spacing:0; }
-a{ color:var(--pop-ink); }
-
-/* ---------- Sidebar: ดำ ตัดกับเมนูสีเขียวมะนาว ---------- */
-.sidebar{ background:var(--pop-ink)!important; border-right:0!important; }
-.sidebar-top-bar{ display:none!important; }
-.sidebar-logo{ border-bottom:1px solid #2e2e2e!important; }
-.sidebar-logo .logo-img{ background:#fff; border-radius:14px; border:2px solid #fff; }
-.sidebar-logo .logo-text{ color:#fff!important; font-weight:700!important; font-size:1.05rem!important; line-height:1.25!important; }
-.sidebar-logo .logo-sub{ color:#bdbdbd!important; }
-.nav-section-label{ color:#8a8a8a!important; font-weight:700!important; letter-spacing:.08em; }
-.nav-item-link{ color:#f2f2f2!important; font-weight:600!important; border-radius:999px!important; border:2px solid transparent; }
-.nav-item-link:hover{ background:#262626!important; color:#fff!important; }
-.nav-item-link .nav-icon{ background:#262626!important; color:#fff!important; border-radius:999px!important; }
-.nav-item-link.active{ background:var(--pop-lime)!important; color:var(--pop-ink)!important; border-color:var(--pop-lime); box-shadow:none!important; }
-.nav-item-link.active .nav-icon{ background:var(--pop-ink)!important; color:var(--pop-lime)!important; }
-.nav-item-link .nav-badge{ background:var(--pop-red)!important; color:#111!important; border:2px solid #111; font-weight:800; }
-.sidebar-footer{ border-top:1px solid #2e2e2e!important; }
-.logout-link{ color:var(--pop-pink)!important; font-weight:700!important; }
-.logout-link:hover{ background:#262626!important; }
-
-/* ---------- หัวข้อหน้า ---------- */
-.page-header h3{ font-size:2rem!important; font-weight:800!important; color:var(--pop-ink)!important; line-height:1.15!important; }
-.page-header p{ color:var(--pop-muted)!important; font-weight:500!important; font-size:0.95rem!important; }
-.page-header-icon{ background:var(--pop-lime)!important; color:var(--pop-ink)!important; border:2px solid var(--pop-line)!important; box-shadow:var(--pop-shadow-sm)!important; border-radius:16px!important; }
-.page-header-icon i{ color:var(--pop-ink)!important; }
-
-/* ---------- การ์ด ---------- */
-.g-card, .fin-card, .login-card, .modal-content{ background:var(--pop-card)!important; border:2px solid var(--pop-line)!important; border-radius:20px!important; box-shadow:var(--pop-shadow)!important; }
-.g-card:hover{ transform:none!important; }
-.form-section-title{ color:var(--pop-ink)!important; font-weight:700!important; font-size:1.05rem!important; }
-.form-section-title::after{ background:var(--pop-ink)!important; opacity:.12; }
-
-/* การ์ดสถิติแดชบอร์ด: พื้นสีสด ตัวเลขใหญ่สีดำ */
-.stat-card{ border:2px solid var(--pop-line)!important; border-radius:20px!important; box-shadow:var(--pop-shadow)!important; color:var(--pop-ink)!important; }
-.stat-card .label, .stat-card .value, .stat-card .pct-badge{ color:var(--pop-ink)!important; }
-.stat-card .value{ font-family:var(--pop-display)!important; font-weight:800!important; }
-.stat-card .bg-icon{ color:var(--pop-ink)!important; opacity:.12!important; }
-.row > [class*="col"]:nth-child(4n+1) > .stat-card{ background:var(--pop-lime)!important; }
-.row > [class*="col"]:nth-child(4n+2) > .stat-card{ background:var(--pop-mint)!important; }
-.row > [class*="col"]:nth-child(4n+3) > .stat-card{ background:var(--pop-yellow)!important; }
-.row > [class*="col"]:nth-child(4n+4) > .stat-card{ background:var(--pop-lav)!important; }
-.fin-card .top-bar{ display:none!important; }
-.fin-card .fin-label{ color:var(--pop-ink-2)!important; font-weight:700!important; }
-.fin-card .fin-value, .fin-card .fin-value *{ color:var(--pop-ink)!important; font-family:var(--pop-display)!important; font-weight:800!important; }
-.row > [class*="col"]:nth-child(4n+1) > .fin-card{ background:#F1FFC9!important; }
-.row > [class*="col"]:nth-child(4n+2) > .fin-card{ background:#D8FBEE!important; }
-.row > [class*="col"]:nth-child(4n+3) > .fin-card{ background:#FFF1BF!important; }
-.row > [class*="col"]:nth-child(4n+4) > .fin-card{ background:#ECE4FF!important; }
-.nk-billcard{ border:2px solid var(--pop-line)!important; border-radius:16px!important; }
-
-/* ---------- ปุ่ม ---------- */
-.g-btn, .login-btn{ border:2px solid var(--pop-line)!important; border-radius:999px!important; font-weight:700!important; box-shadow:var(--pop-shadow-sm)!important; transition:transform .12s ease, box-shadow .12s ease!important; }
-.g-btn:hover:not(:disabled), .login-btn:hover{ transform:translate(-1px,-1px); box-shadow:4px 4px 0 #111!important; }
-.g-btn:active:not(:disabled), .login-btn:active{ transform:translate(2px,2px); box-shadow:0 0 0 #111!important; }
-.g-btn-primary, .login-btn{ background:var(--pop-ink)!important; color:#fff!important; }
-.g-btn-success{ background:var(--pop-lime)!important; color:var(--pop-ink)!important; }
-.g-btn-danger{ background:var(--pop-red)!important; color:var(--pop-ink)!important; }
-.g-btn-warning{ background:var(--pop-yellow)!important; color:var(--pop-ink)!important; }
-.g-btn-cyan{ background:var(--pop-sky)!important; color:var(--pop-ink)!important; }
-.g-btn-ghost{ background:#fff!important; color:var(--pop-ink)!important; }
-.g-btn-sm{ box-shadow:2px 2px 0 #111!important; }
-.g-btn i{ color:inherit!important; }
-
-/* ---------- แท็บ ---------- */
-.g-tabs{ background:#fff!important; border:2px solid var(--pop-line); }
-.g-tab{ font-weight:700!important; color:var(--pop-ink)!important; }
-.g-tab.active, .g-tab:focus{ background:var(--pop-ink)!important; color:#fff!important; }
-
-/* ---------- ฟอร์ม ---------- */
-.g-label, .login-field label{ color:var(--pop-ink)!important; font-weight:700!important; }
-.g-input, .g-select, .g-textarea, .login-input{ border:2px solid var(--pop-line)!important; border-radius:12px!important; color:var(--pop-ink)!important; font-weight:600!important; background:#fff!important; }
-.g-input:focus, .g-select:focus, .g-textarea:focus, .login-input:focus{ box-shadow:0 0 0 4px var(--pop-lime)!important; outline:none!important; }
-
-/* ---------- ตาราง ---------- */
-.g-table-wrap{ border:2px solid var(--pop-line)!important; border-radius:16px!important; background:#fff; }
-.g-table thead th{ background:var(--pop-ink)!important; color:#fff!important; font-weight:700!important; font-size:0.8rem!important; letter-spacing:.02em; border:0!important; }
-.g-table tbody td{ color:var(--pop-ink)!important; border-bottom:1px solid #e9e2d2!important; font-weight:500; }
-.g-table tbody tr:hover td{ background:#FFF4D6!important; }
-
-/* ---------- ป้ายสถานะ ---------- */
-.g-badge{ border:1.5px solid var(--pop-line)!important; border-radius:999px!important; font-weight:700!important; color:var(--pop-ink)!important; }
-.badge-success{ background:var(--pop-mint)!important; }
-.badge-danger{ background:#FFB3B3!important; }
-.badge-warning{ background:var(--pop-yellow)!important; }
-.badge-neutral{ background:#EDEDED!important; }
-.badge-info{ background:var(--pop-sky)!important; }
-.badge-purple{ background:var(--pop-lav)!important; }
-.status-dot{ border:1px solid #111; }
-
-/* ---------- Modal / Toast / Loading / Login ---------- */
-.modal-header{ background:var(--pop-yellow)!important; border-bottom:2px solid var(--pop-line)!important; border-radius:18px 18px 0 0!important; }
-.modal-header .modal-title, .modal-header .modal-title *{ color:var(--pop-ink)!important; }
-.modal-header .btn-close-white{ filter:none!important; }
-.alert-item{ border:2px solid var(--pop-line)!important; border-radius:14px!important; background:#fff!important; }
-#nk-toast{ background:var(--pop-ink)!important; color:#fff!important; border:2px solid var(--pop-lime)!important; border-radius:999px!important; font-weight:700; }
-#loading-overlay{ background:var(--pop-paper)!important; }
-#loading-overlay #loading-text{ color:var(--pop-ink)!important; font-family:var(--pop-display)!important; font-weight:700!important; }
-#login-container{ background:
-  radial-gradient(circle at 12% 18%, var(--pop-lime) 0 70px, transparent 71px),
-  radial-gradient(circle at 88% 22%, var(--pop-lav) 0 90px, transparent 91px),
-  radial-gradient(circle at 82% 85%, var(--pop-yellow) 0 80px, transparent 81px),
-  radial-gradient(circle at 15% 88%, var(--pop-mint) 0 60px, transparent 61px),
-  var(--pop-paper)!important; }
-.login-card h2{ font-size:2.1rem!important; font-weight:800!important; color:var(--pop-ink)!important; }
-.login-card .sub{ color:var(--pop-ink-2)!important; font-weight:600!important; }
-.login-card .login-icon{ border:2px solid var(--pop-line)!important; background:#fff!important; box-shadow:var(--pop-shadow-sm)!important; }
-.login-input-wrap i{ color:var(--pop-ink)!important; }
-
-/* ---------- หน้าบันทึกการชำระเงิน: วงกลมกรอง / กล่องสรุป / แถบความคืบหน้า ---------- */
-#pay-filter-all, #pay-filter-paid, #pay-filter-unpaid{ border:2px solid var(--pop-line)!important; }
-#pay-filter-all{ background:#fff!important; }
-#pay-filter-paid{ background:var(--pop-mint)!important; }
-#pay-filter-unpaid{ background:#FFB3B3!important; }
-#pay-filter-all *, #pay-filter-paid *, #pay-filter-unpaid *{ color:var(--pop-ink)!important; }
-div:has(> #pay-sum-total), div:has(> #pay-sum-paid), div:has(> #pay-sum-unpaid){ border:2px solid var(--pop-line)!important; border-radius:14px!important; }
-div:has(> #pay-sum-total){ background:#fff!important; }
-div:has(> #pay-sum-paid){ background:#D8FBEE!important; }
-div:has(> #pay-sum-unpaid){ background:#FFE0E0!important; }
-#pay-sum-total, #pay-sum-paid, #pay-sum-unpaid{ color:var(--pop-ink)!important; font-family:var(--pop-display)!important; font-size:1.15rem!important; }
-#pay-progress-bar{ background:var(--pop-ink)!important; }
-div:has(> #pay-progress-bar){ background:#fff!important; border:2px solid var(--pop-line)!important; }
-
-@media print{ body{ background:#fff!important; } }
-
   </style>
   <!-- ตั้งค่า URL ของ API (Apps Script Web App) อยู่ในไฟล์ config.js -->
   <script src="config.js"></script>
@@ -1570,7 +1432,7 @@ div:has(> #pay-progress-bar){ background:#fff!important; border:2px solid var(--
           </div></div>
         </div>
         <p style="font-size:0.75rem;color:#64748b;margin:-4px 0 12px;">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2b2b2b;vertical-align:middle;"></span> ปกติ
+          <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;vertical-align:middle;"></span> ปกติ
           <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#d97706;vertical-align:middle;margin-left:10px;"></span> ⚠ สูง/ต่ำผิดปกติ
           <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ef4444;vertical-align:middle;margin-left:10px;"></span> ✖ เลขมิเตอร์ลดลง
           <span style="display:inline-block;width:14px;border-top:2px dashed #64748b;vertical-align:middle;margin-left:10px;"></span> ค่ากลาง
@@ -2330,8 +2192,8 @@ div:has(> #pay-progress-bar){ background:#fff!important; border:2px solid var(--
 
           // Alerts & Payment table
           '<div class="row g-4 mb-3">' +
-            '<div class="col-lg-6"><div class="g-card" style="overflow:hidden;padding:0;"><div style="padding:16px 20px;background:#FFD84D;border-bottom:2px solid #111;display:flex;align-items:center;justify-content:space-between;"><span style="color:#111;font-weight:800;font-size:0.9rem;"><i class="fa-solid fa-screwdriver-wrench me-2"></i>แจ้งซ่อมด่วน</span><span id="dash-rep-badge" style="display:none;background:rgba(255,255,255,0.25);color:#fff;border-radius:20px;padding:2px 10px;font-weight:800;font-size:0.8rem;">0</span></div><div id="dash-rep-list" style="max-height:180px;overflow-y:auto;padding:12px;background:#fffbeb;"></div></div></div>' +
-            '<div class="col-lg-6"><div class="g-card" style="overflow:hidden;padding:0;"><div style="padding:16px 20px;background:#FF9FCF;border-bottom:2px solid #111;display:flex;align-items:center;justify-content:space-between;"><span style="color:#111;font-weight:800;font-size:0.9rem;"><i class="fa-solid fa-bell me-2"></i>แจ้งเตือนค้างชำระ</span><span id="overdue-count-badge" style="display:none;background:rgba(255,255,255,0.25);color:#fff;border-radius:20px;padding:2px 10px;font-weight:800;font-size:0.8rem;">0</span></div><div id="overdue-alerts" style="max-height:180px;overflow-y:auto;padding:12px;background:#fee2e2;"></div></div></div>' +
+            '<div class="col-lg-6"><div class="g-card" style="overflow:hidden;padding:0;"><div style="padding:16px 20px;background:linear-gradient(135deg,#fbbf24,#d97706);display:flex;align-items:center;justify-content:space-between;"><span style="color:#fff;font-weight:800;font-size:0.9rem;"><i class="fa-solid fa-screwdriver-wrench me-2"></i>แจ้งซ่อมด่วน</span><span id="dash-rep-badge" style="display:none;background:rgba(255,255,255,0.25);color:#fff;border-radius:20px;padding:2px 10px;font-weight:800;font-size:0.8rem;">0</span></div><div id="dash-rep-list" style="max-height:180px;overflow-y:auto;padding:12px;background:#fffbeb;"></div></div></div>' +
+            '<div class="col-lg-6"><div class="g-card" style="overflow:hidden;padding:0;"><div style="padding:16px 20px;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:space-between;"><span style="color:#fff;font-weight:800;font-size:0.9rem;"><i class="fa-solid fa-bell me-2"></i>แจ้งเตือนค้างชำระ</span><span id="overdue-count-badge" style="display:none;background:rgba(255,255,255,0.25);color:#fff;border-radius:20px;padding:2px 10px;font-weight:800;font-size:0.8rem;">0</span></div><div id="overdue-alerts" style="max-height:180px;overflow-y:auto;padding:12px;background:#fee2e2;"></div></div></div>' +
           '</div>' +
           '<div style="text-align:center;margin-top:8px;"><button class="g-btn g-btn-primary" onclick="showPage(\'payments\', document.querySelector(\'[onclick*=payments]\'))" style="padding:10px 28px;font-size:0.95rem;"><i class="fa-solid fa-money-bill-wave me-2"></i>ดูบันทึกการชำระเงินทั้งหมด</button></div>';
       }
@@ -2376,7 +2238,7 @@ div:has(> #pay-progress-bar){ background:#fff!important; border:2px solid var(--
           }
           window.utilChart = new Chart(ctx.getContext('2d'), {
             type: 'bar',
-            data: { labels: chartLabels, datasets: [{ label: 'ยอดรายได้รวม (฿)', data: totalRevData, backgroundColor: '#111111', hoverBackgroundColor: '#D4FF4F', borderColor: '#111111', borderWidth: 2, borderRadius: 8, maxBarThickness: 56, categoryPercentage: 0.7, barPercentage: 0.9 }] },
+            data: { labels: chartLabels, datasets: [{ label: 'ยอดรายได้รวม (฿)', data: totalRevData, backgroundColor: '#3b82f6', hoverBackgroundColor: '#16386F', borderColor: '#3b82f6', borderWidth: 0, borderRadius: 8, maxBarThickness: 56, categoryPercentage: 0.7, barPercentage: 0.9 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { titleFont: { size: 14, family: 'Noto Sans Thai' }, bodyFont: { size: 14, family: 'Noto Sans Thai' }, padding: 10, cornerRadius: 8 } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 12, family: 'Noto Sans Thai', weight: 'bold' }, color: '#334155' } }, y: { grid: { color: '#f1f5f9', lineWidth: 1 }, ticks: { font: { size: 12, family: 'Noto Sans Thai', weight: 'bold' }, color: '#334155' }, beginAtZero: true } } }
           });
         }
@@ -3381,7 +3243,7 @@ div:has(> #pay-progress-bar){ background:#fff!important; border:2px solid var(--
     var ctx=elChart.getContext('2d'); if(window.expenseChartInstance){window.expenseChartInstance.destroy();}
     if(labels.length===0){elChart.style.display='none';elMsg.style.display='block';return;}
     else{elChart.style.display='block';elMsg.style.display='none';}
-    window.expenseChartInstance = new Chart(ctx, { type:'doughnut', data:{labels:labels,datasets:[{data:data,backgroundColor:['#FF8A4C','#FFD84D','#7CF0C5','#8FE3FF','#C9B6FF','#D4FF4F'],borderColor:'#111111',borderWidth:2,hoverOffset:4}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{tooltip:{titleFont:{size:13,family:'Noto Sans Thai'},bodyFont:{size:13,family:'Noto Sans Thai'},padding:10,cornerRadius:8}}} });
+    window.expenseChartInstance = new Chart(ctx, { type:'doughnut', data:{labels:labels,datasets:[{data:data,backgroundColor:['#ef4444','#fbbf24','#22c55e','#3b82f6','#a855f7','#64748b'],borderWidth:0,hoverOffset:4}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{tooltip:{titleFont:{size:13,family:'Noto Sans Thai'},bodyFont:{size:13,family:'Noto Sans Thai'},padding:10,cornerRadius:8}}} });
   }
 
   function renderDashboardActions() {
@@ -3726,7 +3588,7 @@ div:has(> #pay-progress-bar){ background:#fff!important; border:2px solid var(--
     if(typeof Chart==='undefined') return;
     var el=document.getElementById(id); if(!el) return;
     if(_rhCharts[id]) { _rhCharts[id].destroy(); delete _rhCharts[id]; }
-    var colorOf={ ok:'#2b2b2b', warn:'#d97706', crit:'#ef4444', first:'#cbd5e1' };
+    var colorOf={ ok:'#3b82f6', warn:'#d97706', crit:'#ef4444', first:'#cbd5e1' };
     var ds=[{ type:'bar', label:unitLabel, data:values, backgroundColor:levels.map(function(l){return colorOf[l]||colorOf.ok;}),
       borderRadius:{topLeft:4, topRight:4}, borderSkipped:'bottom', maxBarThickness:28, order:2 }];
     if(base!==null) ds.push({ type:'line', label:'ค่ากลาง', data:labels.map(function(){return base;}), borderColor:'#64748b', borderWidth:2, borderDash:[5,4], pointRadius:0, pointHitRadius:0, fill:false, order:1 });
