@@ -1333,13 +1333,33 @@
           </div>
 
           <div class="g-card" style="background:#f8fafc;border:1px solid #e2e8f0;padding:14px 16px;margin-bottom:14px;">
-            <p style="margin:0 0 10px;font-size:0.8rem;font-weight:800;color:#334155;"><i class="fa-solid fa-sliders me-1"></i> เลือกข้อมูลที่จะ Export Excel</p>
+            <p style="margin:0 0 10px;font-size:0.8rem;font-weight:800;color:#334155;"><i class="fa-solid fa-sliders me-1"></i> เลือกข้อมูลที่จะส่งออก (Excel และ PDF ใช้ชุดเดียวกัน)</p>
             <div class="row g-3">
               <div class="col-md-6">
                 <p style="margin:0 0 6px;font-size:0.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;">สถานะห้องที่จะรวม</p>
                 <label style="display:flex;align-items:center;gap:7px;font-size:0.85rem;font-weight:600;margin-bottom:6px;cursor:pointer;color:#1e293b;"><input type="checkbox" id="exp-inc-occupied" checked style="width:16px;height:16px;"> ห้องที่มีคนพัก</label>
                 <label style="display:flex;align-items:center;gap:7px;font-size:0.85rem;font-weight:600;margin-bottom:6px;cursor:pointer;color:#1e293b;"><input type="checkbox" id="exp-inc-vacant" checked style="width:16px;height:16px;"> ห้องว่าง</label>
                 <label style="display:flex;align-items:center;gap:7px;font-size:0.85rem;font-weight:600;margin-bottom:0;cursor:pointer;color:#1e293b;"><input type="checkbox" id="exp-inc-reserved" checked style="width:16px;height:16px;"> ห้องติดจอง</label>
+                <p style="margin:14px 0 6px;font-size:0.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;">กรองตามการชำระเงิน</p>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="g-label" style="font-size:0.75rem;margin-bottom:3px;">สถานะบิล</label>
+                    <select id="exp-f-status" class="g-select" style="padding-top:6px;padding-bottom:6px;font-size:0.85rem;">
+                      <option value="all">ทั้งหมด</option>
+                      <option value="paid">ชำระแล้ว</option>
+                      <option value="unpaid">ค้างชำระ</option>
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label class="g-label" style="font-size:0.75rem;margin-bottom:3px;">วิธีชำระเงิน</label>
+                    <select id="exp-f-method" class="g-select" style="padding-top:6px;padding-bottom:6px;font-size:0.85rem;">
+                      <option value="all">ทั้งหมด</option>
+                      <option value="โอนเงิน">โอนเงิน</option>
+                      <option value="เงินสด">เงินสด</option>
+                    </select>
+                  </div>
+                </div>
+                <p style="margin:6px 0 0;font-size:0.7rem;color:#64748b;">เลือก "วิธีชำระ" จะนับเฉพาะบิลที่ชำระแล้ว · บิลเก่าที่ไม่ได้บันทึกวิธีชำระ ระบบดูจากสลิปที่แนบ (มีสลิป = โอนเงิน)</p>
               </div>
               <div class="col-md-6">
                 <p style="margin:0 0 6px;font-size:0.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;">รายการค่าใช้จ่ายที่จะรวม</p>
@@ -2582,8 +2602,7 @@
     var paidText='';
     if(h&&h.paidDate){ var _pd=new Date(h.paidDate); if(!isNaN(_pd.getTime())) paidText=_pd.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'}); }
     if(!paidText) paidText=new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
-    var method='เงินสด'; var slipPrefix='Slip_'+room+'_'+month.replace('/','_');
-    if(raw.tenantFiles){ for(var k=0;k<raw.tenantFiles.length;k++){ if(raw.tenantFiles[k].room===room&&raw.tenantFiles[k].fileName&&raw.tenantFiles[k].fileName.indexOf(slipPrefix)===0){ method='โอนเงิน'; break; } } }
+    var method=getPayMethod(room, month);
     return { room:room, name:nm, month:month, billMonth:billLabel(month), rent:b.rent, wUnits:b.wUnits, wBill:b.wBill, eUnits:b.eUnits, eBill:b.eBill, common:b.common, adjustments:b.adjustments||[], total:b.total, paidText:paidText, method:method };
   }
   function sendReceiptLine(room, month){
@@ -2955,11 +2974,11 @@
       google.script.run.withSuccessHandler(function(res) {
         if(res.indexOf('SUCCESS')>-1) {
           if(raw.history && Array.isArray(raw.history)) {
-            for(var i=0;i<raw.history.length;i++) { if(raw.history[i]&&raw.history[i].room===room&&raw.history[i].month===month) { raw.history[i].payStatus='ชำระแล้ว'; break; } }
+            for(var i=0;i<raw.history.length;i++) { if(raw.history[i]&&raw.history[i].room===room&&raw.history[i].month===month) { raw.history[i].payStatus='ชำระแล้ว'; raw.history[i].payMethod=method; break; } }
           }
           google.script.run.withSuccessHandler(function(r2) { raw=r2||{}; renderPayments(); renderPaymentsPage(); bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide(); btn.disabled=false; btn.innerHTML=origText; }).getAppData();
         } else { alert(res); btn.disabled=false; btn.innerHTML=origText; }
-      }).updatePaymentStatusBackend(room, month, true, payDate);
+      }).updatePaymentStatusBackend(room, month, true, payDate, method);
     }
 
     saveExtrasThen(function(){
@@ -2992,7 +3011,7 @@
       var grandTotal=bill_rc.total;
       var prevW=bill_rc.prevW; var currW=bill_rc.curW;
       var prevE=bill_rc.prevE; var currE=bill_rc.curE;
-      var paymentMethod = ''; if(raw.tenantFiles) { for(var k=0;k<raw.tenantFiles.length;k++){if(raw.tenantFiles[k].room===room&&raw.tenantFiles[k].fileName&&raw.tenantFiles[k].fileName.indexOf('Slip_')>-1){paymentMethod='โอนเงิน';break;}} } if(!paymentMethod) paymentMethod='เงินสด';
+      var paymentMethod = getPayMethod(room, month);
       var commonHtml = common>0?'<tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 10px;font-weight:600;color:#334155;"><i class="fa-solid fa-leaf text-success me-2" style="width:16px;"></i>ค่าส่วนกลาง</td><td style="padding:8px 5px;text-align:center;color:#64748b;">-</td><td style="padding:8px 5px;text-align:center;color:#64748b;">-</td><td style="padding:8px 5px;text-align:center;color:#0f172a;">1</td><td style="padding:8px 5px;text-align:right;color:#0f172a;">'+common.toLocaleString('en-US',{minimumFractionDigits:2})+'</td><td style="padding:8px 10px;text-align:right;font-weight:700;color:#0f172a;font-size:14px;">'+common.toLocaleString('en-US',{minimumFractionDigits:2})+'</td></tr>':'';
       var dormName = raw.settings.DormName||'ชื่อหอพัก';
       // วันที่รับชำระ — ใช้วันที่ที่บันทึกไว้จริงตอนกดรับชำระ (h.paidDate); ถ้าเป็นบิลเก่าที่ยังไม่มีข้อมูลนี้ ใช้วันที่ออกใบเสร็จ (วันนี้) แทน
@@ -3136,12 +3155,7 @@
       var common=bill?bill.common:0;
       var total=bill?bill.total:0; // รวมค่าปรับ/ค่าพิเศษที่กรอกเอง (ไม่มีค่าปรับอัตโนมัติ)
 
-      var method='-';
-      if(isPaid){
-        var slipPrefix='Slip_'+t.room+'_'+month.replace('/','_');
-        if(raw.tenantFiles){for(var sf=0;sf<raw.tenantFiles.length;sf++){if(raw.tenantFiles[sf].room===t.room&&raw.tenantFiles[sf].fileName&&raw.tenantFiles[sf].fileName.indexOf(slipPrefix)===0){method='โอนเงิน';break;}}}
-        if(method==='-')method='เงินสด';
-      }
+      var method = isPaid ? getPayMethod(t.room, month) : '-';
 
       sumRent+=rent; sumWater+=wBill; sumElec+=eBill; sumCommon+=common; sumTotal+=total;
       if(isPaid){
@@ -3385,6 +3399,16 @@
       if(aL&&!bL) return -1; if(!aL&&bL) return 1;
       return ra.localeCompare(rb,undefined,{numeric:true,sensitivity:'base'});
     });
+  }
+
+  // วิธีชำระเงินของบิล: ใช้ค่าที่บันทึกตอนรับชำระ (PayMethod) ถ้าไม่มี (บิลเก่า) ดูจากสลิปที่แนบของรอบนั้น
+  function getPayMethod(room, month) {
+    var hs = Array.isArray(raw.history) ? raw.history : [];
+    for (var i=0;i<hs.length;i++){ var h=hs[i]; if (h && h.room===room && h.month===month && h.payMethod) return h.payMethod; }
+    var slipPrefix = 'Slip_' + room + '_' + String(month).replace('/','_');
+    var fs = Array.isArray(raw.tenantFiles) ? raw.tenantFiles : [];
+    for (var k=0;k<fs.length;k++){ if (fs[k] && fs[k].room===room && fs[k].fileName && fs[k].fileName.indexOf(slipPrefix)===0) return 'โอนเงิน'; }
+    return 'เงินสด';
   }
 
   // ===== ค่าปรับ = "กรอกเอง" เท่านั้น (ไม่คำนวณอัตโนมัติ) =====
@@ -4473,10 +4497,13 @@
 
   function readSummaryOptions() {
     function chk(id, def){ var el = document.getElementById(id); return el ? el.checked : def; }
+    function val(id, def){ var el = document.getElementById(id); return el && el.value ? el.value : def; }
     return {
       occ: chk('exp-inc-occupied', true), vacant: chk('exp-inc-vacant', true), reserved: chk('exp-inc-reserved', true),
       rent: chk('exp-inc-rent', true), water: chk('exp-inc-water', true), elec: chk('exp-inc-elec', true),
-      common: chk('exp-inc-common', true), late: chk('exp-inc-latefee', true)
+      common: chk('exp-inc-common', true), late: chk('exp-inc-latefee', true),
+      payMethod: val('exp-f-method', 'all'),   // all | โอนเงิน | เงินสด
+      billStatus: val('exp-f-status', 'all')   // all | paid | unpaid
     };
   }
 
@@ -4489,7 +4516,7 @@
     return 0;
   }
 
-  // สร้างชุดข้อมูลกลางของรายงานสรุป: คอลัมน์ที่เลือก, เดือนในช่วง, ห้องที่กรองแล้ว, และตัวดึงบิลรายห้อง/เดือน
+  // สร้างชุดข้อมูลกลางของรายงานสรุป: คอลัมน์ที่เลือก, เดือนในช่วง, ห้องที่กรองแล้ว, ตัวกรองการชำระ และตัวดึงบิลรายห้อง/เดือน
   function buildRoomSummaryModel(year, period) {
     var opt = readSummaryOptions();
     if (!opt.occ && !opt.vacant && !opt.reserved) return { error: 'กรุณาเลือกสถานะห้องอย่างน้อย 1 ประเภท' };
@@ -4518,29 +4545,107 @@
     tenants.forEach(function(t){ if (t && t.room) tenantMap[t.room] = t; });
     var commonFee = parseFloat((raw.settings || {}).CommonFee) || 0;
 
-    // คืน {roomStatus, vacant, hasMeters, payStatus, rent, water, elec, common, late}
+    // คืน {roomStatus, vacant, hasMeters, payStatus, payMethod, paidDate, rent, water, elec, common, late}
     function getBillData(room, month) {
       var t = tenantMap[room] || {};
       var isOcc = (t.status === 'มีคนพัก');
       var rent = parseFloat(t.rent) || 0;
       var h = billLookup[room+'|'+month] || null;
-      if (!isOcc) return { roomStatus: t.status || 'ห้องว่าง', vacant:true, hasMeters:false, payStatus:null, rent:null, water:null, elec:null, common:null, late:null };
-      if (!h)     return { roomStatus: t.status, vacant:false, hasMeters:false, payStatus:'รอจดมิเตอร์', rent:rent, water:null, elec:null, common:commonFee, late:null };
+      if (!isOcc) return { roomStatus: t.status || 'ห้องว่าง', vacant:true, hasMeters:false, payStatus:null, payMethod:'', paidDate:'', rent:null, water:null, elec:null, common:null, late:null };
+      if (!h)     return { roomStatus: t.status, vacant:false, hasMeters:false, payStatus:'รอจดมิเตอร์', payMethod:'', paidDate:'', rent:rent, water:null, elec:null, common:commonFee, late:null };
       var bill = calcRoomBill(room, month);
+      var isPaid = (h.payStatus === 'ชำระแล้ว');
+      var pm = isPaid ? getPayMethod(room, month) : '';
+      var pd = '';
+      if (isPaid && h.paidDate) { var _d = new Date(h.paidDate); if (!isNaN(_d.getTime())) pd = _d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}); }
+      // เดือนแรกของห้อง = เลขมิเตอร์ตั้งต้น ไม่ใช่บิลจริง (หน่วยจะเท่ากับเลขทั้งหมด) จึงไม่นับในรายงาน
+      if (bill && !bill.hasPrev) return { roomStatus: t.status, vacant:false, hasMeters:false, start:true, payStatus:'เลขมิเตอร์เริ่มต้น', payMethod:'', paidDate:'', rent:null, water:null, elec:null, common:null, late:null };
       if (bill) {
-        var isPaid = (h.payStatus === 'ชำระแล้ว');
         var lf = opt.late ? getLateFeeOf(bill) : 0; // ค่าปรับที่กรอกเอง (ไม่คำนวณอัตโนมัติ)
-        return { roomStatus: t.status, vacant:false, hasMeters:true, payStatus: h.payStatus || '-', rent: bill.rent, water: bill.wBill, elec: bill.eBill, common: bill.common, late: lf };
+        return { roomStatus: t.status, vacant:false, hasMeters:true, payStatus: isPaid ? 'ชำระแล้ว' : 'ค้างชำระ', payMethod:pm, paidDate:pd, rent: bill.rent, water: bill.wBill, elec: bill.eBill, common: bill.common, late: lf };
       }
-      return { roomStatus: t.status, vacant:false, hasMeters:false, payStatus: h.payStatus || '-', rent:rent, water:null, elec:null, common:commonFee, late:null };
+      return { roomStatus: t.status, vacant:false, hasMeters:false, payStatus: h.payStatus || '-', payMethod:pm, paidDate:pd, rent:rent, water:null, elec:null, common:commonFee, late:null };
+    }
+
+    // ตัวกรองการชำระ: เมื่อเลือก จะนับเฉพาะบิลที่จดมิเตอร์แล้ว และตรงเงื่อนไข
+    var filterActive = (opt.payMethod !== 'all' || opt.billStatus !== 'all');
+    function pass(bd) {
+      if (!filterActive) return true;
+      if (bd.vacant || !bd.hasMeters) return false;
+      var paid = (bd.payStatus === 'ชำระแล้ว');
+      if (opt.billStatus === 'paid' && !paid) return false;
+      if (opt.billStatus === 'unpaid' && paid) return false;
+      if (opt.payMethod !== 'all') { if (!paid || bd.payMethod !== opt.payMethod) return false; }
+      return true;
     }
 
     var statusLabel = (opt.occ && opt.vacant && opt.reserved) ? 'ทุกสถานะ'
       : [opt.occ?'มีคนพัก':null, opt.vacant?'ห้องว่าง':null, opt.reserved?'ติดจอง':null].filter(Boolean).join(' / ');
     var chargeLabel = chargeCols.map(function(c){ return c.label; }).join(' / ') + (opt.late ? ' / ค่าปรับ' : '');
+    var filterLabel = 'สถานะบิล: ' + ({all:'ทั้งหมด', paid:'ชำระแล้ว', unpaid:'ค้างชำระ'}[opt.billStatus] || 'ทั้งหมด')
+      + ' | วิธีชำระ: ' + (opt.payMethod === 'all' ? 'ทั้งหมด' : opt.payMethod);
 
-    return { opt:opt, chargeCols:chargeCols, months:months, tenants:tenants, getBillData:getBillData,
-             commonFee:commonFee, statusLabel:statusLabel, chargeLabel:chargeLabel };
+    return { opt:opt, chargeCols:chargeCols, months:months, tenants:tenants, getBillData:getBillData, pass:pass, filterActive:filterActive,
+             commonFee:commonFee, statusLabel:statusLabel, chargeLabel:chargeLabel, filterLabel:filterLabel };
+  }
+
+  // รวบรวมแถวข้อมูล + ยอดสรุป (ใช้ร่วมกันทั้ง Excel และ PDF ตัวเลขจึงตรงกัน)
+  function computeSummaryReport(model) {
+    var cc = model.chargeCols, opt = model.opt;
+    function mLabelLong(m){ var mp=m.split('/'); try { return new Date(parseInt(mp[1]),parseInt(mp[0]),1).toLocaleDateString('th-TH',{month:'long',year:'numeric'}); } catch(e){ return m; } }
+    var rows = [];
+    var T = { bills:0, billed:0, late:0, net:0, paidN:0, paidAmt:0, unpaidN:0, unpaidAmt:0, waitN:0,
+              transferN:0, transferAmt:0, cashN:0, cashAmt:0, otherPaidN:0, otherPaidAmt:0,
+              charge: cc.map(function(){ return 0; }) };
+    var byMonth = model.months.map(function(m){ return { m:m, ml:mLabelLong(m), bills:0, billed:0, paidAmt:0, unpaidAmt:0, transferAmt:0, cashAmt:0, paidN:0, unpaidN:0 }; });
+    model.months.forEach(function(m, mi){
+      model.tenants.forEach(function(t){
+        var bd = model.getBillData(t.room, m);
+        if (bd.start) return;              // เลขมิเตอร์เริ่มต้น ไม่ใช่บิล
+        if (!model.pass(bd)) return;
+        var r = { m:m, ml:byMonth[mi].ml, room:t.room, name:t.name||'-', bd:bd, vals:[], sub:0, late:0, net:0, kind:'vacant' };
+        if (bd.vacant) { r.kind='vacant'; }
+        else if (!bd.hasMeters) {
+          r.kind='wait'; T.waitN++;
+          cc.forEach(function(c){ var known=(c.key==='rent'||c.key==='common'); r.vals.push(known ? (summaryChargeValue(bd,c.key)||0) : null); });
+        } else {
+          r.kind='bill';
+          cc.forEach(function(c, ci){ var v=summaryChargeValue(bd,c.key)||0; r.vals.push(v); r.sub+=v; T.charge[ci]+=v; });
+          r.late = opt.late ? (bd.late||0) : 0; r.net = r.sub + r.late;
+          var paid = (bd.payStatus === 'ชำระแล้ว');
+          T.bills++; T.billed+=r.sub; T.late+=r.late; T.net+=r.net;
+          var bm = byMonth[mi]; bm.bills++; bm.billed+=r.net;
+          if (paid) {
+            T.paidN++; T.paidAmt+=r.net; bm.paidN++; bm.paidAmt+=r.net;
+            if (bd.payMethod==='โอนเงิน') { T.transferN++; T.transferAmt+=r.net; bm.transferAmt+=r.net; }
+            else if (bd.payMethod==='เงินสด') { T.cashN++; T.cashAmt+=r.net; bm.cashAmt+=r.net; }
+            else { T.otherPaidN++; T.otherPaidAmt+=r.net; }
+          } else { T.unpaidN++; T.unpaidAmt+=r.net; bm.unpaidN++; bm.unpaidAmt+=r.net; }
+        }
+        rows.push(r);
+      });
+    });
+    return { rows:rows, T:T, byMonth:byMonth.filter(function(b){ return b.bills>0; }) };
+  }
+
+  function summaryPeriodLabel(year, period) {
+    var periodLabels = {all:'ทั้งปี', Q1:'ไตรมาส 1 (ม.ค.–มี.ค.)', Q2:'ไตรมาส 2 (เม.ย.–มิ.ย.)', Q3:'ไตรมาส 3 (ก.ค.–ก.ย.)', Q4:'ไตรมาส 4 (ต.ค.–ธ.ค.)'};
+    return periodLabels[period] || ('เดือน ' + (function(){ try { return new Date(parseInt(year), parseInt(period)-1, 1).toLocaleDateString('th-TH',{month:'long',year:'numeric'}); } catch(e){ return period; } })());
+  }
+
+  // โหลด xlsx-js-style (SheetJS ที่ใส่สี/เส้นตารางได้) เมื่อใช้ครั้งแรก — ถ้าโหลดไม่ได้จะส่งออกแบบไม่มีสีแทน
+  // หมายเหตุ: หน้านี้มี element id="exports" ทำให้ตัวโหลดแบบ UMD เข้าใจผิดว่าเป็น CommonJS
+  // จึงโหลดโค้ดมาแล้วรันในขอบเขตที่ปิด exports/module/define ไว้ แล้วค่อยตั้ง window.XLSX
+  function ensureXlsxStyle(cb){
+    if (window.__xlsxStyleReady) return cb();
+    fetch('https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js')
+      .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function(code){
+        var lib = (new Function('exports', 'module', 'define', code + '\n;return XLSX;'))(undefined, undefined, undefined);
+        if (lib && lib.utils && lib.writeFile) { window.XLSX = lib; window.__xlsxStyleReady = true; }
+        cb();
+      })
+      .catch(function(){ cb(); }); // โหลดไม่ได้ = ส่งออกแบบไม่มีสี (ข้อมูลครบเหมือนเดิม)
   }
 
   function exportRoomSummaryExcel() {
@@ -4549,150 +4654,147 @@
     var periodEl = document.getElementById('export-period');
     if (!yearEl || !periodEl || !yearEl.value) return alert('กรุณาเลือกปีและช่วงเวลาก่อน');
     var year = yearEl.value, period = periodEl.value;
-
     var model = buildRoomSummaryModel(year, period);
     if (model.error) return alert(model.error);
-    var opt = model.opt, chargeCols = model.chargeCols, months = model.months, tenants = model.tenants, getBillData = model.getBillData;
-    var nSub = chargeCols.length;
+    ensureXlsxStyle(function(){ buildSummaryWorkbook(model, year, period); });
+  }
 
+  function buildSummaryWorkbook(model, year, period) {
+    var opt = model.opt, cc = model.chargeCols, months = model.months, tenants = model.tenants;
+    var R = computeSummaryReport(model), T = R.T;
     var dormName = (raw.settings && raw.settings.DormName) || 'หอพัก';
-    var periodLabels = {all:'ทั้งปี', Q1:'ไตรมาส 1 (ม.ค.–มี.ค.)', Q2:'ไตรมาส 2 (เม.ย.–มิ.ย.)', Q3:'ไตรมาส 3 (ก.ค.–ก.ย.)', Q4:'ไตรมาส 4 (ต.ค.–ธ.ค.)'};
-    var periodLabel = periodLabels[period] || ('เดือน ' + (function(){ try { return new Date(parseInt(year), parseInt(period)-1, 1).toLocaleDateString('th-TH',{month:'long',year:'numeric'}); } catch(e){ return period; } })());
+    var periodLabel = summaryPeriodLabel(year, period);
     var exportDate = new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
-    var numFmt = '#,##0.00';
-
-    function mLabelShort(m){ var mp=m.split('/'); try { return new Date(parseInt(mp[1]),parseInt(mp[0])-1,1).toLocaleDateString('th-TH',{month:'short',year:'2-digit'}); } catch(e){ return m; } }
-    function mLabelLong(m){ var mp=m.split('/'); try { return new Date(parseInt(mp[1]),parseInt(mp[0]),1).toLocaleDateString('th-TH',{month:'long',year:'numeric'}); } catch(e){ return m; } }
-    function applyNumFmt(ws, aoa, startRow, cols){ for (var r=startRow; r<aoa.length; r++){ cols.forEach(function(c){ if (typeof aoa[r][c]==='number'){ var addr=XLSX.utils.encode_cell({r:r,c:c}); if (ws[addr]){ ws[addr].t='n'; ws[addr].z=numFmt; } } }); } }
+    var NUM = '#,##0.00', INT = '#,##0';
+    // ---- สไตล์ ----
+    var BORDER = { top:{style:'thin',color:{rgb:'CBD5E1'}}, bottom:{style:'thin',color:{rgb:'CBD5E1'}}, left:{style:'thin',color:{rgb:'CBD5E1'}}, right:{style:'thin',color:{rgb:'CBD5E1'}} };
+    var ST = {
+      title:{ font:{bold:true, sz:16, color:{rgb:'0F172A'}} },
+      sub:{ font:{sz:10, color:{rgb:'475569'}} },
+      sec:{ font:{bold:true, sz:12, color:{rgb:'1D4ED8'}} },
+      head:{ font:{bold:true, color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'1E3A8A'}}, alignment:{horizontal:'center', vertical:'center', wrapText:true}, border:BORDER },
+      cell:{ border:BORDER, alignment:{vertical:'center'} },
+      num:{ border:BORDER, numFmt:NUM, alignment:{horizontal:'right'} },
+      int:{ border:BORDER, numFmt:INT, alignment:{horizontal:'center'} },
+      tot:{ font:{bold:true}, fill:{fgColor:{rgb:'FEF3C7'}}, border:BORDER },
+      totNum:{ font:{bold:true}, fill:{fgColor:{rgb:'FEF3C7'}}, border:BORDER, numFmt:NUM, alignment:{horizontal:'right'} },
+      paid:{ font:{bold:true, color:{rgb:'166534'}}, fill:{fgColor:{rgb:'DCFCE7'}}, border:BORDER, alignment:{horizontal:'center'} },
+      unpaid:{ font:{bold:true, color:{rgb:'991B1B'}}, fill:{fgColor:{rgb:'FEE2E2'}}, border:BORDER, alignment:{horizontal:'center'} },
+      wait:{ font:{color:{rgb:'92400E'}}, fill:{fgColor:{rgb:'FEF3C7'}}, border:BORDER, alignment:{horizontal:'center'} },
+      muted:{ font:{color:{rgb:'94A3B8'}}, border:BORDER, alignment:{horizontal:'center'} },
+      kpiL:{ font:{bold:true, color:{rgb:'334155'}}, fill:{fgColor:{rgb:'EFF6FF'}}, border:BORDER },
+      kpiV:{ font:{bold:true, sz:12, color:{rgb:'0F172A'}}, fill:{fgColor:{rgb:'EFF6FF'}}, border:BORDER, numFmt:NUM, alignment:{horizontal:'right'} },
+      kpiN:{ font:{bold:true, sz:12, color:{rgb:'0F172A'}}, fill:{fgColor:{rgb:'EFF6FF'}}, border:BORDER, numFmt:INT, alignment:{horizontal:'center'} }
+    };
+    // aoa + style map
+    function Sheet(){ this.aoa=[]; this.sty={}; this.merges=[]; }
+    Sheet.prototype.row = function(vals, styles){ var r=this.aoa.length; this.aoa.push(vals); if (styles) for (var c=0;c<vals.length;c++){ var s = Array.isArray(styles) ? styles[c] : styles; if (s) this.sty[r+','+c]=s; } return r; };
+    Sheet.prototype.build = function(cols){ var ws = XLSX.utils.aoa_to_sheet(this.aoa); var self=this;
+      Object.keys(this.sty).forEach(function(k){ var p=k.split(','); var addr=XLSX.utils.encode_cell({r:+p[0],c:+p[1]}); if(!ws[addr]) ws[addr]={t:'s',v:''}; ws[addr].s=self.sty[k]; if (self.sty[k].numFmt && typeof ws[addr].v==='number') ws[addr].z=self.sty[k].numFmt; });
+      ws['!merges']=this.merges; ws['!cols']=cols; return ws; };
 
     var wb = XLSX.utils.book_new();
 
-    // ───── SHEET 1: สรุปรายห้อง (Pivot: ห้อง × เดือน) ─────
-    var aoa = [];
-    aoa.push([dormName + ' — สรุปข้อมูลห้องทั้งหมด ปี ' + year + ' (' + periodLabel + ')']);
-    aoa.push(['ส่งออก ณ วันที่ ' + exportDate + ' | สถานะ: ' + model.statusLabel + ' | รายการ: ' + model.chargeLabel + ' | * = รอจดมิเตอร์']);
-    aoa.push([]);
+    // ───── ชีต 1: สรุป ─────
+    var S = new Sheet();
+    S.row([dormName + ' — รายงานสรุปการเงิน'], [ST.title]); S.merges.push({s:{r:0,c:0},e:{r:0,c:6}});
+    S.row(['ปี ' + year + ' · ' + periodLabel + ' · ส่งออก ' + exportDate], [ST.sub]); S.merges.push({s:{r:1,c:0},e:{r:1,c:6}});
+    S.row(['ห้อง: ' + model.statusLabel + ' · รายการ: ' + model.chargeLabel + ' · ' + model.filterLabel], [ST.sub]); S.merges.push({s:{r:2,c:0},e:{r:2,c:6}});
+    S.row([]);
+    S.row(['ภาพรวม'], [ST.sec]);
+    S.row(['รายการ','จำนวนบิล','ยอดเงิน (฿)'], ST.head);
+    S.row(['ยอดเรียกเก็บทั้งหมด', T.bills, T.net], [ST.kpiL, ST.kpiN, ST.kpiV]);
+    S.row(['ชำระแล้ว', T.paidN, T.paidAmt], [ST.kpiL, ST.kpiN, ST.kpiV]);
+    S.row(['ค้างชำระ', T.unpaidN, T.unpaidAmt], [ST.kpiL, ST.kpiN, ST.kpiV]);
+    S.row(['อัตราการเก็บเงิน', '', T.net ? T.paidAmt / T.net : 0], [ST.kpiL, ST.kpiN, Object.assign({}, ST.kpiV, {numFmt:'0.0%'})]);
+    S.row([]);
+    S.row(['แยกตามวิธีชำระเงิน'], [ST.sec]);
+    S.row(['วิธีชำระ','จำนวนบิล','ยอดเงิน (฿)'], ST.head);
+    S.row(['โอนเงิน', T.transferN, T.transferAmt], [ST.cell, ST.int, ST.num]);
+    S.row(['เงินสด', T.cashN, T.cashAmt], [ST.cell, ST.int, ST.num]);
+    if (T.otherPaidN) S.row(['ชำระแล้ว (ไม่ระบุวิธี)', T.otherPaidN, T.otherPaidAmt], [ST.cell, ST.int, ST.num]);
+    S.row(['ค้างชำระ', T.unpaidN, T.unpaidAmt], [ST.cell, ST.int, ST.num]);
+    S.row(['รวม', T.bills, T.net], [ST.tot, Object.assign({}, ST.tot, {numFmt:INT, alignment:{horizontal:'center'}}), ST.totNum]);
+    S.row([]);
+    S.row(['แยกตามรายการค่าใช้จ่าย'], [ST.sec]);
+    S.row(['รายการ','','ยอดเงิน (฿)'], ST.head);
+    cc.forEach(function(c, ci){ S.row([c.label, '', T.charge[ci]], [ST.cell, ST.cell, ST.num]); });
+    if (opt.late) S.row(['ค่าปรับ (ที่กรอกไว้)', '', T.late], [ST.cell, ST.cell, ST.num]);
+    S.row(['รวม', '', T.net], [ST.tot, ST.tot, ST.totNum]);
+    S.row([]);
+    S.row(['สรุปรายเดือน (ตามรอบบิล)'], [ST.sec]);
+    S.row(['รอบบิล','จำนวนบิล','ยอดเรียกเก็บ (฿)','ชำระแล้ว (฿)','ค้างชำระ (฿)','โอนเงิน (฿)','เงินสด (฿)'], ST.head);
+    R.byMonth.forEach(function(b){ S.row([b.ml, b.bills, b.billed, b.paidAmt, b.unpaidAmt, b.transferAmt, b.cashAmt], [ST.cell, ST.int, ST.num, ST.num, ST.num, ST.num, ST.num]); });
+    S.row(['รวม', T.bills, T.net, T.paidAmt, T.unpaidAmt, T.transferAmt, T.cashAmt], [ST.tot, Object.assign({}, ST.tot, {numFmt:INT, alignment:{horizontal:'center'}}), ST.totNum, ST.totNum, ST.totNum, ST.totNum, ST.totNum]);
+    XLSX.utils.book_append_sheet(wb, S.build([{wch:26},{wch:12},{wch:18},{wch:16},{wch:16},{wch:16},{wch:16}]), 'สรุป');
 
-    var grpRow = ['ห้อง','สถานะห้อง','ชื่อผู้เช่า'];
-    var subRow = ['','',''];
-    months.forEach(function(m){ var lbl=mLabelShort(m); chargeCols.forEach(function(cc,ci){ grpRow.push(ci===0?lbl:''); subRow.push(cc.label); }); });
-    chargeCols.forEach(function(cc){ grpRow.push('รวม'+cc.label); subRow.push('(฿)'); });
-    grpRow.push('รวมทั้งหมด'); subRow.push('(฿)');
-    aoa.push(grpRow); aoa.push(subRow);
-    var DATA_START_S1 = aoa.length;
-
-    var totalCols = grpRow.length;
-    var merges = [{s:{r:0,c:0},e:{r:0,c:totalCols-1}}, {s:{r:1,c:0},e:{r:1,c:totalCols-1}}];
-    months.forEach(function(_, mi){ var c=3+mi*nSub; if (nSub>1) merges.push({s:{r:3,c:c},e:{r:3,c:c+nSub-1}}); });
-
-    var gTotals = chargeCols.map(function(){ return 0; }); var gAll = 0;
-    var mTotals = months.map(function(){ return chargeCols.map(function(){ return 0; }); });
-
-    tenants.forEach(function(t){
-      var row = [t.room, t.status||'ห้องว่าง', t.name||'-'];
-      var tTotals = chargeCols.map(function(){ return 0; }); var hasAny = false;
-      months.forEach(function(m, mi){
-        var bd = getBillData(t.room, m);
-        chargeCols.forEach(function(cc, ci){
-          if (bd.vacant) { row.push('-'); }
-          else if (!bd.hasMeters) {
-            var known = (cc.key==='rent' || cc.key==='common');
-            if (known) { var v = summaryChargeValue(bd, cc.key) || 0; row.push(v); tTotals[ci]+=v; mTotals[mi][ci]+=v; hasAny=true; }
-            else { row.push('*'); }
-          } else {
-            var v2 = summaryChargeValue(bd, cc.key) || 0; row.push(v2); tTotals[ci]+=v2; mTotals[mi][ci]+=v2; hasAny=true;
-          }
-        });
-      });
-      chargeCols.forEach(function(cc, ci){ row.push(hasAny ? tTotals[ci] : '-'); });
-      var tAll = tTotals.reduce(function(a,b){ return a+b; }, 0);
-      row.push(hasAny ? tAll : '-');
-      if (hasAny) { chargeCols.forEach(function(cc, ci){ gTotals[ci]+=tTotals[ci]; }); gAll+=tAll; }
-      aoa.push(row);
-    });
-
-    aoa.push([]);
-    var totRow = ['','รวมทั้งหมด',''];
-    months.forEach(function(_, mi){ chargeCols.forEach(function(cc, ci){ totRow.push(mTotals[mi][ci]); }); });
-    chargeCols.forEach(function(cc, ci){ totRow.push(gTotals[ci]); });
-    totRow.push(gAll);
-    aoa.push(totRow);
-
-    var ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!merges'] = merges;
-    var wscols = [{wch:9},{wch:12},{wch:22}];
-    months.forEach(function(){ chargeCols.forEach(function(){ wscols.push({wch:12}); }); });
-    chargeCols.forEach(function(){ wscols.push({wch:13}); });
-    wscols.push({wch:14});
-    ws['!cols'] = wscols;
-    ws['!freeze'] = { xSplit:3, ySplit:DATA_START_S1 };
-    var numColsS1 = []; for (var ci1=3; ci1<totalCols; ci1++) numColsS1.push(ci1);
-    applyNumFmt(ws, aoa, DATA_START_S1, numColsS1);
-    XLSX.utils.book_append_sheet(wb, ws, 'สรุปรายห้อง');
-
-    // ───── SHEET 2: รายการรายเดือน (Flat: ทุกห้อง × ทุกเดือน) ─────
-    var hdr2 = ['ลำดับ','เดือน','ห้อง','สถานะห้อง','ชื่อผู้เช่า'];
-    chargeCols.forEach(function(cc){ hdr2.push(cc.label + ' (฿)'); });
-    hdr2.push('ยอดเรียกเก็บ (฿)');
-    if (opt.late) { hdr2.push('ค่าปรับ (฿)'); hdr2.push('ยอดรวมสุทธิ (฿)'); }
-    hdr2.push('สถานะชำระ');
-    var numStartCol2 = 5, numEndCol2 = hdr2.length - 2;
-
-    var aoa2 = [];
-    aoa2.push([dormName + ' — รายการรายเดือน ปี ' + year + ' (' + periodLabel + ')']);
-    aoa2.push(['ส่งออก ณ วันที่ ' + exportDate + ' | สถานะ: ' + model.statusLabel + ' | รายการ: ' + model.chargeLabel + ' | * = รอจดมิเตอร์']);
-    aoa2.push([]);
-    aoa2.push(hdr2);
-    var DATA_START_S2 = aoa2.length;
+    // ───── ชีต 2: รายการรายเดือน ─────
+    var D = new Sheet();
+    var hdr = ['ลำดับ','รอบบิล','ห้อง','ชื่อผู้เช่า'];
+    cc.forEach(function(c){ hdr.push(c.label + ' (฿)'); });
+    if (opt.late) hdr.push('ค่าปรับ (฿)');
+    hdr.push('ยอดรวม (฿)','สถานะบิล','วันที่ชำระ','วิธีชำระ');
+    D.row([dormName + ' — รายการรายเดือน'], [ST.title]); D.merges.push({s:{r:0,c:0},e:{r:0,c:hdr.length-1}});
+    D.row(['ปี ' + year + ' · ' + periodLabel + ' · ' + model.filterLabel + ' · * = รอจดมิเตอร์'], [ST.sub]); D.merges.push({s:{r:1,c:0},e:{r:1,c:hdr.length-1}});
+    D.row([]);
+    D.row(hdr, ST.head);
     var seq = 0;
-    months.forEach(function(m){
-      var ml = mLabelLong(m);
-      tenants.forEach(function(t){
-        seq++;
-        var bd = getBillData(t.room, m);
-        var row = [seq, ml, t.room, bd.roomStatus, t.name||'-'];
-        if (bd.vacant) {
-          chargeCols.forEach(function(){ row.push('-'); });
-          row.push('-');
-          if (opt.late) { row.push('-'); row.push('-'); }
-          row.push('-');
-        } else if (!bd.hasMeters) {
-          var sub = 0;
-          chargeCols.forEach(function(cc){ var known=(cc.key==='rent'||cc.key==='common'); if (known){ var v=summaryChargeValue(bd,cc.key)||0; row.push(v); sub+=v; } else { row.push('*'); } });
-          row.push('*');
-          if (opt.late) { row.push('*'); row.push('*'); }
-          row.push(bd.payStatus);
-        } else {
-          var sub2 = 0;
-          chargeCols.forEach(function(cc){ var v=summaryChargeValue(bd,cc.key)||0; row.push(v); sub2+=v; });
-          row.push(sub2);
-          if (opt.late) { var lf=bd.late||0; row.push(lf); row.push(sub2+lf); }
-          row.push(bd.payStatus);
-        }
-        aoa2.push(row);
-      });
+    R.rows.forEach(function(r){
+      seq++;
+      var vals = [seq, r.ml, r.room, r.name], sty = [ST.int, ST.cell, Object.assign({}, ST.cell, {font:{bold:true}}), ST.cell];
+      if (r.kind === 'vacant') {
+        cc.forEach(function(){ vals.push('-'); sty.push(ST.muted); }); if (opt.late) { vals.push('-'); sty.push(ST.muted); }
+        vals.push('-', r.bd.roomStatus, '', ''); sty.push(ST.muted, ST.muted, ST.muted, ST.muted);
+      } else if (r.kind === 'wait') {
+        r.vals.forEach(function(v){ vals.push(v===null ? '*' : v); sty.push(v===null ? ST.wait : ST.num); }); if (opt.late) { vals.push('*'); sty.push(ST.wait); }
+        vals.push('*', 'รอจดมิเตอร์', '', ''); sty.push(ST.wait, ST.wait, ST.cell, ST.cell);
+      } else {
+        r.vals.forEach(function(v){ vals.push(v); sty.push(ST.num); }); if (opt.late) { vals.push(r.late); sty.push(ST.num); }
+        var paid = r.bd.payStatus === 'ชำระแล้ว';
+        vals.push(r.net, r.bd.payStatus, r.bd.paidDate || '', paid ? (r.bd.payMethod || '-') : '-');
+        sty.push(Object.assign({}, ST.num, {font:{bold:true}}), paid ? ST.paid : ST.unpaid, Object.assign({}, ST.cell, {alignment:{horizontal:'center'}}), Object.assign({}, ST.cell, {alignment:{horizontal:'center'}}));
+      }
+      D.row(vals, sty);
     });
+    var totVals = ['', '', '', 'รวม ' + T.bills + ' บิล'], totSty = [ST.tot, ST.tot, ST.tot, ST.tot];
+    T.charge.forEach(function(v){ totVals.push(v); totSty.push(ST.totNum); }); if (opt.late) { totVals.push(T.late); totSty.push(ST.totNum); }
+    totVals.push(T.net, 'ชำระ ' + T.paidN + ' / ค้าง ' + T.unpaidN, '', 'โอน ' + T.transferN + ' / สด ' + T.cashN); totSty.push(ST.totNum, ST.tot, ST.tot, ST.tot);
+    D.row(totVals, totSty);
+    var dcols = [{wch:7},{wch:18},{wch:8},{wch:24}]; cc.forEach(function(){ dcols.push({wch:13}); }); if (opt.late) dcols.push({wch:12});
+    dcols.push({wch:14},{wch:13},{wch:12},{wch:14});
+    var wsD = D.build(dcols); wsD['!freeze'] = { xSplit:0, ySplit:4 };
+    XLSX.utils.book_append_sheet(wb, wsD, 'รายการรายเดือน');
 
-    var sums2 = [];
-    for (var c2=numStartCol2; c2<=numEndCol2; c2++){ var s2=0; for (var ri=DATA_START_S2; ri<aoa2.length; ri++){ var rr=aoa2[ri]; if (rr && typeof rr[c2]==='number') s2+=rr[c2]; } sums2.push(s2); }
-    aoa2.push([]);
-    var sumRow2 = ['','','','','รวมทั้งหมด'];
-    sums2.forEach(function(s){ sumRow2.push(s); });
-    sumRow2.push('');
-    aoa2.push(sumRow2);
+    // ───── ชีต 3: สรุปรายห้อง (ห้อง × เดือน) ─────
+    var P = new Sheet();
+    P.row([dormName + ' — ยอดรวมรายห้อง (ห้อง × รอบบิล)'], [ST.title]);
+    P.row(['ปี ' + year + ' · ' + periodLabel + ' · ' + model.filterLabel], [ST.sub]);
+    P.row([]);
+    function mShort(m){ var mp=m.split('/'); try { return new Date(parseInt(mp[1]),parseInt(mp[0]),1).toLocaleDateString('th-TH',{month:'short',year:'2-digit'}); } catch(e){ return m; } }
+    var ph = ['ห้อง','ชื่อผู้เช่า']; months.forEach(function(m){ ph.push(mShort(m)); }); ph.push('รวม (฿)');
+    P.row(ph, ST.head);
+    P.merges.push({s:{r:0,c:0},e:{r:0,c:ph.length-1}}, {s:{r:1,c:0},e:{r:1,c:ph.length-1}});
+    var cell = {}; R.rows.forEach(function(r){ if (r.kind==='bill') cell[r.room+'|'+r.m] = r; });
+    var colTot = months.map(function(){ return 0; }), grand = 0;
+    tenants.forEach(function(t){
+      var has = months.some(function(m){ return cell[t.room+'|'+m]; });
+      if (model.filterActive && !has) return;
+      var vals = [t.room, t.name||'-'], sty = [Object.assign({}, ST.cell, {font:{bold:true}}), ST.cell], tot = 0;
+      months.forEach(function(m, mi){ var r = cell[t.room+'|'+m];
+        if (r) { vals.push(r.net); sty.push(r.bd.payStatus==='ชำระแล้ว' ? Object.assign({}, ST.num, {fill:{fgColor:{rgb:'F0FDF4'}}}) : Object.assign({}, ST.num, {fill:{fgColor:{rgb:'FEF2F2'}}, font:{color:{rgb:'991B1B'}}})); tot += r.net; colTot[mi] += r.net; }
+        else { vals.push('-'); sty.push(ST.muted); } });
+      vals.push(tot); sty.push(Object.assign({}, ST.num, {font:{bold:true}})); grand += tot;
+      P.row(vals, sty);
+    });
+    var pt = ['รวม', '']; var pts = [ST.tot, ST.tot]; colTot.forEach(function(v){ pt.push(v); pts.push(ST.totNum); }); pt.push(grand); pts.push(ST.totNum);
+    P.row(pt, pts);
+    P.row([]); P.row(['พื้นเขียว = ชำระแล้ว · พื้นแดง = ค้างชำระ · - = ไม่มีบิล/ไม่ตรงตัวกรอง'], [ST.sub]);
+    var pcols = [{wch:8},{wch:24}]; months.forEach(function(){ pcols.push({wch:12}); }); pcols.push({wch:14});
+    var wsP = P.build(pcols); wsP['!freeze'] = { xSplit:2, ySplit:4 };
+    XLSX.utils.book_append_sheet(wb, wsP, 'สรุปรายห้อง');
 
-    var ws2 = XLSX.utils.aoa_to_sheet(aoa2);
-    ws2['!merges'] = [{s:{r:0,c:0},e:{r:0,c:hdr2.length-1}}, {s:{r:1,c:0},e:{r:1,c:hdr2.length-1}}];
-    var ws2cols = [{wch:7},{wch:20},{wch:9},{wch:12},{wch:22}];
-    for (var c3=numStartCol2; c3<=numEndCol2; c3++) ws2cols.push({wch:14});
-    ws2cols.push({wch:14});
-    ws2['!cols'] = ws2cols;
-    ws2['!freeze'] = { xSplit:0, ySplit:DATA_START_S2 };
-    var numColsS2 = []; for (var c4=numStartCol2; c4<=numEndCol2; c4++) numColsS2.push(c4);
-    applyNumFmt(ws2, aoa2, DATA_START_S2, numColsS2);
-    XLSX.utils.book_append_sheet(wb, ws2, 'รายการรายเดือน');
-
-    XLSX.writeFile(wb, 'สรุปห้อง_' + year + '_' + period + '.xlsx');
+    var fTag = (opt.billStatus!=='all' ? '_' + ({paid:'ชำระแล้ว', unpaid:'ค้างชำระ'}[opt.billStatus]) : '') + (opt.payMethod!=='all' ? '_' + opt.payMethod : '');
+    XLSX.writeFile(wb, 'รายงานสรุป_' + year + '_' + period + fTag + '.xlsx');
   }
 
   function openFullReport() {
@@ -4700,80 +4802,92 @@
     var periodEl = document.getElementById('export-period');
     if (!yearEl || !periodEl || !yearEl.value) { alert('กรุณาเลือกปีและระยะเวลาก่อน'); return; }
     var year = yearEl.value, period = periodEl.value;
-
     var model = buildRoomSummaryModel(year, period);
     if (model.error) { alert(model.error); return; }
-    var opt = model.opt, chargeCols = model.chargeCols, months = model.months, tenants = model.tenants, getBillData = model.getBillData;
-
-    var periodLabels = {all:'ทั้งปี', Q1:'ไตรมาส 1', Q2:'ไตรมาส 2', Q3:'ไตรมาส 3', Q4:'ไตรมาส 4'};
-    var pLabel = periodLabels[period] || ('เดือน ' + (function(){ try { return new Date(parseInt(year),parseInt(period)-1,1).toLocaleDateString('th-TH',{month:'long',year:'numeric'}); } catch(e){ return period; } })());
+    var opt = model.opt, cc = model.chargeCols;
+    var R = computeSummaryReport(model), T = R.T;
+    var pLabel = summaryPeriodLabel(year, period);
     var today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
     var dormName = (raw.settings && raw.settings.DormName) ? raw.settings.DormName : 'หอพัก';
+    function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
     var fmtB = function(n){ return (typeof n==='number') ? n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}) : n; };
-    function mLabelLong(m){ var mp=m.split('/'); try { return new Date(parseInt(mp[1]),parseInt(mp[0]),1).toLocaleDateString('th-TH',{month:'long',year:'numeric'}); } catch(e){ return m; } }
+    var rate = T.net ? Math.round(T.paidAmt / T.net * 1000) / 10 : 0;
 
-    // ── สร้างแถวตาราง (คอลัมน์ตรงกับ Excel ชีต "รายการรายเดือน") ──
-    var colSums = chargeCols.map(function(){ return 0; });
-    var sumBill = 0, sumLate = 0, sumNet = 0;
-    var occRooms = 0, paidCount = 0, unpaidCount = 0;
-    tenants.forEach(function(t){ if (t.status==='มีคนพัก') occRooms++; });
-
-    var bodyRows = '';
-    months.forEach(function(m){
-      var ml = mLabelLong(m);
-      tenants.forEach(function(t){
-        var bd = getBillData(t.room, m);
-        var rc = bd.roomStatus==='มีคนพัก' ? '#16a34a' : bd.roomStatus==='ติดจอง' ? '#a855f7' : '#64748b';
-        var tds = '<td>'+ml+'</td><td>'+t.room+'</td><td style="color:'+rc+';font-weight:600;">'+(bd.roomStatus||'-')+'</td><td>'+(t.name||'-')+'</td>';
-        if (bd.vacant) {
-          chargeCols.forEach(function(){ tds += '<td style="text-align:right;color:#cbd5e1;">-</td>'; });
-          tds += '<td style="text-align:right;color:#cbd5e1;">-</td>';
-          if (opt.late) { tds += '<td style="text-align:right;color:#cbd5e1;">-</td><td style="text-align:right;color:#cbd5e1;">-</td>'; }
-          tds += '<td style="color:#64748b;">-</td>';
-        } else if (!bd.hasMeters) {
-          chargeCols.forEach(function(cc){ var known=(cc.key==='rent'||cc.key==='common'); if (known){ var v=summaryChargeValue(bd,cc.key)||0; tds += '<td style="text-align:right;">'+fmtB(v)+'</td>'; } else { tds += '<td style="text-align:right;color:#fbbf24;">*</td>'; } });
-          tds += '<td style="text-align:right;color:#fbbf24;font-weight:700;">*</td>';
-          if (opt.late) { tds += '<td style="text-align:right;color:#fbbf24;">*</td><td style="text-align:right;color:#fbbf24;">*</td>'; }
-          tds += '<td style="color:#d97706;font-weight:700;">รอจดมิเตอร์</td>';
-        } else {
-          var sub2 = 0;
-          chargeCols.forEach(function(cc, ci){ var v=summaryChargeValue(bd,cc.key)||0; sub2+=v; colSums[ci]+=v; tds += '<td style="text-align:right;">'+fmtB(v)+'</td>'; });
-          var lf = bd.late || 0; var net = sub2 + lf; var paid = (bd.payStatus==='ชำระแล้ว');
-          tds += '<td style="text-align:right;font-weight:700;">'+fmtB(sub2)+'</td>';
-          if (opt.late) { tds += '<td style="text-align:right;color:'+(lf>0?'#dc2626':'#64748b')+';font-weight:700;">'+(lf>0?'+'+fmtB(lf):'-')+'</td><td style="text-align:right;font-weight:800;color:'+(lf>0?'#dc2626':'#0f172a')+';">'+fmtB(net)+'</td>'; }
-          tds += '<td style="color:'+(paid?'#16a34a':'#dc2626')+';font-weight:700;">'+bd.payStatus+'</td>';
-          sumBill += sub2; sumLate += lf; sumNet += net;
-          if (paid) paidCount++; else unpaidCount++;
-        }
-        bodyRows += '<tr>'+tds+'</tr>';
-      });
+    // ตารางรายการ
+    var thead = '<th>#</th><th>รอบบิล</th><th>ห้อง</th><th>ชื่อผู้เช่า</th>';
+    cc.forEach(function(c){ thead += '<th class="r">'+c.label+'</th>'; });
+    if (opt.late) thead += '<th class="r">ค่าปรับ</th>';
+    thead += '<th class="r">ยอดรวม</th><th class="c">สถานะ</th><th class="c">วันที่ชำระ</th><th class="c">วิธีชำระ</th>';
+    var body = '', seq = 0;
+    R.rows.forEach(function(r){
+      seq++;
+      var tds = '<td class="c mu">'+seq+'</td><td>'+esc(r.ml)+'</td><td><b>'+esc(r.room)+'</b></td><td>'+esc(r.name)+'</td>';
+      if (r.kind === 'vacant') {
+        cc.forEach(function(){ tds += '<td class="r mu">-</td>'; }); if (opt.late) tds += '<td class="r mu">-</td>';
+        tds += '<td class="r mu">-</td><td class="c"><span class="pill gy">'+esc(r.bd.roomStatus)+'</span></td><td></td><td></td>';
+      } else if (r.kind === 'wait') {
+        r.vals.forEach(function(v){ tds += v===null ? '<td class="r wt">*</td>' : '<td class="r">'+fmtB(v)+'</td>'; }); if (opt.late) tds += '<td class="r wt">*</td>';
+        tds += '<td class="r wt">*</td><td class="c"><span class="pill yl">รอจดมิเตอร์</span></td><td></td><td></td>';
+      } else {
+        r.vals.forEach(function(v){ tds += '<td class="r">'+fmtB(v)+'</td>'; }); if (opt.late) tds += '<td class="r">'+(r.late ? fmtB(r.late) : '-')+'</td>';
+        var paid = r.bd.payStatus === 'ชำระแล้ว';
+        tds += '<td class="r b">'+fmtB(r.net)+'</td><td class="c"><span class="pill '+(paid?'gn':'rd')+'">'+r.bd.payStatus+'</span></td><td class="c">'+esc(r.bd.paidDate||'')+'</td><td class="c">'+(paid ? esc(r.bd.payMethod||'-') : '-')+'</td>';
+      }
+      body += '<tr>'+tds+'</tr>';
     });
-    var colCount = 4 + chargeCols.length + 1 + (opt.late?2:0) + 1;
-    if (!bodyRows) bodyRows = '<tr><td colspan="'+colCount+'" style="text-align:center;color:#64748b;padding:14px">ไม่พบข้อมูลในช่วงเวลานี้</td></tr>';
+    var colCount = 4 + cc.length + (opt.late?1:0) + 4;
+    if (!body) body = '<tr><td colspan="'+colCount+'" class="c mu" style="padding:16px">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
+    var tfoot = '<td colspan="4" class="r">รวม '+T.bills+' บิล</td>';
+    T.charge.forEach(function(v){ tfoot += '<td class="r">'+fmtB(v)+'</td>'; }); if (opt.late) tfoot += '<td class="r">'+fmtB(T.late)+'</td>';
+    tfoot += '<td class="r">'+fmtB(T.net)+'</td><td class="c">ชำระ '+T.paidN+' / ค้าง '+T.unpaidN+'</td><td></td><td class="c">โอน '+T.transferN+' / สด '+T.cashN+'</td>';
 
-    var thead = '<th>เดือน</th><th>ห้อง</th><th>สถานะห้อง</th><th>ชื่อผู้เช่า</th>';
-    chargeCols.forEach(function(cc){ thead += '<th style="text-align:right">'+cc.label+' (฿)</th>'; });
-    thead += '<th style="text-align:right">ยอดเรียกเก็บ (฿)</th>';
-    if (opt.late) { thead += '<th style="text-align:right">ค่าปรับ (฿)</th><th style="text-align:right">ยอดรวมสุทธิ (฿)</th>'; }
-    thead += '<th>สถานะชำระ</th>';
+    // สรุปตามวิธีชำระ + รายเดือน
+    var methodRows = '<tr><td>โอนเงิน</td><td class="c">'+T.transferN+'</td><td class="r">'+fmtB(T.transferAmt)+'</td></tr>'
+      + '<tr><td>เงินสด</td><td class="c">'+T.cashN+'</td><td class="r">'+fmtB(T.cashAmt)+'</td></tr>'
+      + (T.otherPaidN ? '<tr><td>ชำระแล้ว (ไม่ระบุวิธี)</td><td class="c">'+T.otherPaidN+'</td><td class="r">'+fmtB(T.otherPaidAmt)+'</td></tr>' : '')
+      + '<tr><td>ค้างชำระ</td><td class="c">'+T.unpaidN+'</td><td class="r">'+fmtB(T.unpaidAmt)+'</td></tr>';
+    var chargeRows = ''; cc.forEach(function(c, ci){ chargeRows += '<tr><td>'+c.label+'</td><td class="r">'+fmtB(T.charge[ci])+'</td></tr>'; });
+    if (opt.late) chargeRows += '<tr><td>ค่าปรับ (ที่กรอกไว้)</td><td class="r">'+fmtB(T.late)+'</td></tr>';
+    var monthRows = R.byMonth.map(function(b){ return '<tr><td>'+esc(b.ml)+'</td><td class="c">'+b.bills+'</td><td class="r">'+fmtB(b.billed)+'</td><td class="r gnT">'+fmtB(b.paidAmt)+'</td><td class="r rdT">'+fmtB(b.unpaidAmt)+'</td><td class="r">'+fmtB(b.transferAmt)+'</td><td class="r">'+fmtB(b.cashAmt)+'</td></tr>'; }).join('')
+      || '<tr><td colspan="7" class="c mu">-</td></tr>';
 
-    var tfoot = '<td style="text-align:right;font-weight:800;" colspan="4">รวมทั้งหมด</td>';
-    colSums.forEach(function(s){ tfoot += '<td style="text-align:right;font-weight:800;">'+fmtB(s)+'</td>'; });
-    tfoot += '<td style="text-align:right;font-weight:800;">'+fmtB(sumBill)+'</td>';
-    if (opt.late) { tfoot += '<td style="text-align:right;font-weight:800;color:#dc2626;">'+fmtB(sumLate)+'</td><td style="text-align:right;font-weight:800;">'+fmtB(sumNet)+'</td>'; }
-    tfoot += '<td></td>';
+    var css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sarabun","Noto Sans Thai",Arial,sans-serif;font-size:11.5px;color:#0f172a;background:#fff;padding:22px}'
+      + '@media print{body{padding:0}@page{margin:10mm;size:A4 landscape}.no-print{display:none!important}tr,.box{page-break-inside:avoid}thead{display:table-header-group}}'
+      + '.no-print{margin-bottom:14px;text-align:center}.btn{border:none;padding:9px 22px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;margin:0 4px;font-family:inherit}.btn.p{background:#1d4ed8;color:#fff}.btn.g{background:#e2e8f0;color:#0f172a}'
+      + '.hd{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.hd h1{font-size:20px;font-weight:800}.hd p{font-size:11px;opacity:.9;margin-top:3px}.hd .rt{text-align:right;font-size:11px;opacity:.9}'
+      + '.chips{margin:-4px 0 12px}.chip{display:inline-block;background:#eff6ff;color:#1e3a8a;border:1px solid #bfdbfe;border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;margin:0 6px 4px 0}'
+      + '.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}.kpi{border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;border-top:4px solid #1d4ed8}.kpi label{display:block;font-size:10px;color:#64748b;font-weight:700}.kpi b{display:block;font-size:16px;font-weight:800;margin-top:2px}.kpi small{color:#64748b;font-size:10px;font-weight:600}'
+      + '.kpi.gn{border-top-color:#16a34a}.kpi.rd{border-top-color:#dc2626}.kpi.am{border-top-color:#d97706}.kpi.vi{border-top-color:#7c3aed}'
+      + '.grid3{display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;margin-bottom:14px}.box{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}.box h3{font-size:12px;font-weight:800;color:#1e3a8a;background:#eff6ff;padding:8px 12px;border-bottom:1px solid #dbeafe}'
+      + 'table{width:100%;border-collapse:collapse}th{background:#1e3a8a;color:#fff;font-size:10.5px;font-weight:700;padding:7px 8px;text-align:left;white-space:nowrap}td{padding:6px 8px;border-bottom:1px solid #e2e8f0;vertical-align:middle}tbody tr:nth-child(even) td{background:#f8fafc}'
+      + '.box table th{background:#f1f5f9;color:#334155}.r{text-align:right}.c{text-align:center}.b{font-weight:800}.mu{color:#94a3b8}.wt{color:#d97706;font-weight:700}.gnT{color:#166534;font-weight:700}.rdT{color:#991b1b;font-weight:700}'
+      + 'tfoot td{background:#fef3c7!important;font-weight:800;border-top:2px solid #f59e0b}.sec{font-size:13px;font-weight:800;color:#1e3a8a;margin:4px 0 8px}'
+      + '.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:10px;font-weight:800}.pill.gn{background:#dcfce7;color:#166534}.pill.rd{background:#fee2e2;color:#991b1b}.pill.yl{background:#fef3c7;color:#92400e}.pill.gy{background:#f1f5f9;color:#64748b}'
+      + '.ft{margin-top:14px;text-align:center;font-size:10px;color:#94a3b8}';
 
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงานสรุป '+esc(dormName)+' '+year+'</title>'
+      + '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet"><style>'+css+'</style></head><body>'
+      + '<div class="no-print"><button class="btn p" onclick="window.print()">🖨 บันทึก / พิมพ์ PDF</button><button class="btn g" onclick="window.close()">✕ ปิด</button><div style="margin-top:6px;color:#64748b;font-size:11px">เลือกเครื่องพิมพ์ "Save as PDF" แนวนอน</div></div>'
+      + '<div class="hd"><div><h1>📊 รายงานสรุปการเงิน — '+esc(dormName)+'</h1><p>ปี '+year+' · '+esc(pLabel)+'</p></div><div class="rt">สร้างเมื่อ '+today+'</div></div>'
+      + '<div class="chips"><span class="chip">ห้อง: '+esc(model.statusLabel)+'</span><span class="chip">รายการ: '+esc(model.chargeLabel)+'</span><span class="chip">สถานะบิล: '+({all:'ทั้งหมด',paid:'ชำระแล้ว',unpaid:'ค้างชำระ'}[opt.billStatus])+'</span><span class="chip">วิธีชำระ: '+(opt.payMethod==='all'?'ทั้งหมด':esc(opt.payMethod))+'</span></div>'
+      + '<div class="kpis">'
+      +   '<div class="kpi"><label>ยอดเรียกเก็บ</label><b>฿'+fmtB(T.net)+'</b><small>'+T.bills+' บิล</small></div>'
+      +   '<div class="kpi gn"><label>ชำระแล้ว</label><b>฿'+fmtB(T.paidAmt)+'</b><small>'+T.paidN+' บิล · เก็บได้ '+rate+'%</small></div>'
+      +   '<div class="kpi rd"><label>ค้างชำระ</label><b>฿'+fmtB(T.unpaidAmt)+'</b><small>'+T.unpaidN+' บิล</small></div>'
+      +   '<div class="kpi vi"><label>รับโอนเงิน</label><b>฿'+fmtB(T.transferAmt)+'</b><small>'+T.transferN+' บิล</small></div>'
+      +   '<div class="kpi am"><label>รับเงินสด</label><b>฿'+fmtB(T.cashAmt)+'</b><small>'+T.cashN+' บิล</small></div>'
+      + '</div>'
+      + '<div class="grid3">'
+      +   '<div class="box"><h3>แยกตามวิธีชำระเงิน</h3><table><thead><tr><th>วิธีชำระ</th><th class="c">บิล</th><th class="r">ยอดเงิน (฿)</th></tr></thead><tbody>'+methodRows+'</tbody><tfoot><tr><td>รวม</td><td class="c">'+T.bills+'</td><td class="r">'+fmtB(T.net)+'</td></tr></tfoot></table></div>'
+      +   '<div class="box"><h3>แยกตามรายการ</h3><table><thead><tr><th>รายการ</th><th class="r">ยอดเงิน (฿)</th></tr></thead><tbody>'+chargeRows+'</tbody><tfoot><tr><td>รวม</td><td class="r">'+fmtB(T.net)+'</td></tr></tfoot></table></div>'
+      +   '<div class="box"><h3>สรุปรายเดือน (ตามรอบบิล)</h3><table><thead><tr><th>รอบบิล</th><th class="c">บิล</th><th class="r">เรียกเก็บ</th><th class="r">ชำระแล้ว</th><th class="r">ค้างชำระ</th><th class="r">โอน</th><th class="r">เงินสด</th></tr></thead><tbody>'+monthRows+'</tbody></table></div>'
+      + '</div>'
+      + '<p class="sec">📄 รายการรายเดือน</p>'
+      + '<table><thead><tr>'+thead+'</tr></thead><tbody>'+body+'</tbody><tfoot><tr>'+tfoot+'</tr></tfoot></table>'
+      + '<div class="ft">รายงานนี้สร้างโดยระบบจัดการหอพัก · '+esc(dormName)+' · '+today+' · * = รอจดมิเตอร์</div></body></html>';
     var reportWin = window.open('', '_blank');
-    reportWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงานสรุปหอพัก</title>');
-    reportWin.document.write('<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">');
-    reportWin.document.write('<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sarabun","Noto Sans Thai",Arial,sans-serif;font-size:11.5px;color:#1e293b;background:#fff;padding:20px}@media print{body{padding:8px}@page{margin:10mm;size:A4 landscape}.no-print{display:none}}.no-print{display:block;margin-bottom:16px;text-align:center}.header{border-bottom:3px solid #3b82f6;padding-bottom:12px;margin-bottom:16px}.header h1{font-size:19px;color:#1d4ed8;font-weight:900}.header p{color:#64748b;font-size:11px;margin-top:3px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.kpi{background:#f8fafc;border-radius:10px;padding:11px 13px;border-left:4px solid #3b82f6}.kpi.g{border-color:#22c55e}.kpi.r{border-color:#ef4444}.kpi.a{border-color:#fbbf24}.kpi label{display:block;font-size:9.5px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}.kpi span{font-size:15px;font-weight:900;color:#0f172a}.sec{font-size:13px;font-weight:900;color:#1d4ed8;margin:16px 0 8px;border-bottom:2px solid #3b82f6;padding-bottom:5px}table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:10.5px}thead th{background:#1d4ed8;color:#fff;padding:7px 8px;text-align:left;font-size:10px;font-weight:700;white-space:nowrap}td{padding:5px 8px;border-bottom:1px solid #e2e8f0;vertical-align:middle}tbody tr:nth-child(even) td{background:#f8fafc}tfoot td{background:#f5f3ff;border-top:2px solid #3b82f6}.footer{margin-top:18px;text-align:center;font-size:10px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:10px}.print-btn{background:#3b82f6;color:#fff;border:none;padding:10px 26px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-right:8px}.close-btn{background:#64748b;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}</style></head><body>');
-    reportWin.document.write('<div class="no-print"><button class="print-btn" onclick="window.print()">&#128438; บันทึก / พิมพ์ PDF</button><button class="close-btn" onclick="window.close()">&#10005; ปิด</button><span style="margin-left:12px;color:#64748b;font-size:11px">เลือก "Save as PDF" ในหน้า Print</span></div>');
-    reportWin.document.write('<div class="header"><h1>&#128202; รายงานสรุปหอพัก: '+dormName+'</h1><p>ปี ค.ศ. '+year+' | '+pLabel+' | สถานะ: '+model.statusLabel+' | รายการ: '+model.chargeLabel+' | สร้างเมื่อ: '+today+'</p></div>');
-    reportWin.document.write('<div class="grid4"><div class="kpi"><label>ห้องในรายงาน</label><span>'+tenants.length+' ห้อง</span></div><div class="kpi g"><label>มีผู้เช่า</label><span>'+occRooms+' ห้อง</span></div><div class="kpi g"><label>บิลชำระแล้ว</label><span>'+paidCount+' บิล</span></div><div class="kpi r"><label>บิลค้างชำระ</label><span>'+unpaidCount+' บิล</span></div></div>');
-    reportWin.document.write('<div class="grid4"><div class="kpi g"><label>ยอดเรียกเก็บรวม</label><span>&#3647;'+fmtB(sumBill)+'</span></div>'+(opt.late?'<div class="kpi r"><label>ค่าปรับรวม</label><span style="color:#dc2626;">&#3647;'+fmtB(sumLate)+'</span></div><div class="kpi a"><label>ยอดรวมสุทธิ</label><span>&#3647;'+fmtB(sumNet)+'</span></div>':'')+'<div class="kpi"><label>จำนวนรายการ</label><span>'+(months.length*tenants.length)+' รายการ</span></div></div>');
-    reportWin.document.write('<p class="sec">&#128196; รายการรายเดือน (เรียงห้องตัวอักษรก่อน ตัวเลขทีหลัง)</p>');
-    reportWin.document.write('<table><thead><tr>'+thead+'</tr></thead><tbody>'+bodyRows+'</tbody><tfoot><tr>'+tfoot+'</tr></tfoot></table>');
-    reportWin.document.write('<div class="footer">รายงานนี้สร้างโดยระบบ Dorm Manager &middot; '+dormName+' &middot; '+today+'</div></body></html>');
+    if (!reportWin) { alert('เบราว์เซอร์บล็อกหน้าต่างใหม่ กรุณาอนุญาต Pop-up แล้วลองอีกครั้ง'); return; }
+    reportWin.document.write(html);
     reportWin.document.close();
   }
 
