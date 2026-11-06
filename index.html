@@ -487,6 +487,32 @@
     .nk-billcard .lbl { font-size: 0.72rem; color: rgba(255,255,255,.72); letter-spacing:.04em; }
     .nk-billcard .val { font-weight: 700; font-size: 1.05rem; margin-top: 2px; }
 
+    /* ===== ปุ่มสำรองข้อมูล ===== */
+    .backup-cta {
+      display: flex; align-items: center; gap: 12px; width: 100%;
+      border: none; cursor: pointer; padding: 12px 14px; margin-bottom: 10px;
+      border-radius: 14px; color: #fff; text-align: left; font-family: inherit;
+      background: linear-gradient(135deg, #16a34a, #059669);
+      box-shadow: 0 6px 16px rgba(22,163,74,.35);
+      transition: transform .15s var(--ease), box-shadow .15s var(--ease);
+    }
+    .backup-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(22,163,74,.45); }
+    .backup-cta .bk-ic {
+      width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+      background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .backup-cta .bk-t { display: block; font-weight: 800; font-size: 0.98rem; line-height: 1.2; }
+    .backup-cta .bk-s { display: block; font-size: 0.72rem; font-weight: 600; opacity: .95; margin-top: 2px; }
+    .backup-cta.warn { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 6px 16px rgba(217,119,6,.35); }
+    .backup-cta.danger { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 6px 16px rgba(220,38,38,.35); animation: bkPulse 1.8s infinite; }
+    @keyframes bkPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.55); } 50% { box-shadow: 0 0 0 9px rgba(239,68,68,0); } }
+    .mobile-topbar { display: none; }
+    .bk-big-btn { display:flex; align-items:center; gap:14px; width:100%; border:none; cursor:pointer; padding:16px 18px; border-radius:14px; color:#fff; text-align:left; font-family:inherit; margin-bottom:10px; transition: transform .15s var(--ease), filter .15s; }
+    .bk-big-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    .bk-big-btn:disabled { opacity:.7; cursor:wait; transform:none; }
+    .bk-big-btn i { font-size: 1.5rem; width: 30px; text-align: center; }
+    .bk-big-btn b { display:block; font-size:1.05rem; font-weight:800; }
+    .bk-big-btn small { display:block; font-size:0.76rem; opacity:.92; font-weight:600; }
     /* ===== MOBILE / RESPONSIVE ===== */
     .mobile-menu-btn { display: none; }
     #sidebar-overlay { display: none; }
@@ -501,6 +527,12 @@
         border-radius: 10px; background: var(--sand-600); color: #fff;
         font-weight: 700; font-size: 0.95rem; box-shadow: var(--sh-sm); margin-bottom: 14px;
       }
+      .mobile-topbar { display: flex; gap: 8px; position: sticky; top: 0; z-index: 80; margin-bottom: 14px; }
+      .mobile-topbar .mobile-menu-btn { position: static; margin-bottom: 0; }
+      .mobile-topbar .backup-cta { flex: 1; width: auto; margin: 0; height: 42px; padding: 0 12px; border-radius: 10px; gap: 8px; }
+      .mobile-topbar .backup-cta .bk-ic { width: 28px; height: 28px; font-size: 0.9rem; border-radius: 8px; }
+      .mobile-topbar .backup-cta .bk-t { font-size: 0.88rem; }
+      .mobile-topbar .backup-cta .bk-s { font-size: 0.64rem; margin-top: 0; }
       #sidebar-overlay.show { display: block; position: fixed; inset: 0; background: rgba(20,14,14,.4); z-index: 999; }
       .page-header { flex-wrap: wrap; }
       .page-header [style*="margin-left:auto"] { margin-left: 0 !important; }
@@ -727,6 +759,10 @@
     </div>
 
     <div class="sidebar-footer">
+      <button type="button" class="backup-cta" id="bk-side-btn" onclick="openBackupModal()" title="สำรองข้อมูลทั้งหมดเป็นไฟล์ Excel">
+        <span class="bk-ic"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+        <span><span class="bk-t">สำรองข้อมูล</span><span class="bk-s" id="bk-side-status">กำลังตรวจสอบ...</span></span>
+      </button>
       <a class="logout-link" onclick="doLogout()">
         <div class="nav-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
         <span>ออกจากระบบ</span>
@@ -736,7 +772,13 @@
 
   <!-- MAIN CONTENT AREA -->
   <div class="main-content">
-    <button class="mobile-menu-btn no-print" onclick="toggleSidebar()" aria-label="เมนู"><i class="fa-solid fa-bars"></i> เมนู</button>
+    <div class="mobile-topbar no-print">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="เมนู"><i class="fa-solid fa-bars"></i> เมนู</button>
+      <button type="button" class="backup-cta" id="bk-mobile-btn" onclick="openBackupModal()">
+        <span class="bk-ic"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+        <span><span class="bk-t">สำรองข้อมูล</span><span class="bk-s" id="bk-mobile-status"></span></span>
+      </button>
+    </div>
     <div id="sidebar-overlay" class="no-print" onclick="closeSidebar()"></div>
 
     <!-- DASHBOARD -->
@@ -1737,6 +1779,56 @@
     </div>
   </div>
 
+  <!-- Backup Modal -->
+  <div class="modal fade" id="backupModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header" style="background:linear-gradient(135deg,#16a34a,#047857);">
+          <h5 class="modal-title text-white"><i class="fa-solid fa-shield-halved me-2"></i>สำรองข้อมูล</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="bk-status-box" style="display:flex;align-items:center;gap:14px;border-radius:14px;padding:14px 16px;margin-bottom:14px;background:#f0fdf4;border:1px solid #bbf7d0;">
+            <i id="bk-status-icon" class="fa-solid fa-circle-check" style="font-size:1.8rem;color:#16a34a;"></i>
+            <div>
+              <div style="font-weight:800;font-size:1rem;color:#0f172a;" id="bk-status-title">สำรองล่าสุด: -</div>
+              <div style="font-size:0.8rem;color:#475569;" id="bk-status-sub">ระบบสำรองอัตโนมัติวันละ 1 ครั้งเมื่อเปิดเว็บ</div>
+            </div>
+          </div>
+
+          <button type="button" class="bk-big-btn" style="background:linear-gradient(135deg,#16a34a,#059669);box-shadow:0 6px 16px rgba(22,163,74,.3);" onclick="runBackupNow(false, this)">
+            <i class="fa-brands fa-google-drive"></i>
+            <span><b>สำรองข้อมูลตอนนี้ (เก็บใน Google Drive)</b><small>เก็บทุกชีท (ผู้เช่า มิเตอร์ บิล การชำระ รายจ่าย ฯลฯ) เป็นไฟล์ Excel ในโฟลเดอร์ส่วนตัว</small></span>
+          </button>
+          <button type="button" class="bk-big-btn" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 6px 16px rgba(37,99,235,.3);" onclick="runBackupNow(true, this)">
+            <i class="fa-solid fa-download"></i>
+            <span><b>สำรอง + ดาวน์โหลดลงเครื่องนี้</b><small>ได้ไฟล์ .xlsx เก็บไว้ในคอมพิวเตอร์/มือถือ อีกชั้นหนึ่ง (และเก็บใน Drive ด้วย)</small></span>
+          </button>
+          <div id="bk-result" style="display:none;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:700;font-size:0.88rem;"></div>
+
+          <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+            <h6 style="font-weight:800;margin:0;color:#0f172a;"><i class="fa-solid fa-clock-rotate-left me-1"></i>ไฟล์สำรองล่าสุด <span id="bk-total" style="font-size:0.78rem;color:#64748b;font-weight:600;"></span></h6>
+            <a id="bk-folder-link" href="#" target="_blank" rel="noopener" style="font-size:0.82rem;font-weight:700;display:none;"><i class="fa-solid fa-folder-open me-1"></i>เปิดโฟลเดอร์ใน Drive</a>
+          </div>
+          <div style="max-height:260px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:12px;">
+            <table class="g-table" style="margin:0;min-width:0;">
+              <tbody id="bk-list"><tr><td style="text-align:center;padding:18px;color:#64748b;">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+
+          <details style="margin-top:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px 14px;">
+            <summary style="font-weight:800;cursor:pointer;color:#334155;"><i class="fa-solid fa-life-ring me-1"></i>ถ้าข้อมูลหาย จะกู้คืนยังไง?</summary>
+            <ol style="font-size:0.84rem;color:#334155;margin:10px 0 0;padding-left:20px;line-height:1.7;">
+              <li><b>ข้อมูลหายไม่กี่รายการ / แก้ผิด:</b> เปิด Google Sheet ฐานข้อมูล → เมนู <b>ไฟล์ → ประวัติเวอร์ชัน</b> เลือกเวลาก่อนข้อมูลหาย แล้วกด "คืนค่าเวอร์ชันนี้"</li>
+              <li><b>ใช้ไฟล์สำรอง:</b> ดาวน์โหลดไฟล์สำรองของวันที่ต้องการ → เปิดดูชีทที่ต้องการ (เช่น Meters, Rooms) → คัดลอกแถวที่หายกลับไปวางในชีทเดิม</li>
+              <li>ไฟล์สำรองมีข้อมูลทุกอย่างรวมถึงรหัสผ่านในชีท Settings — เก็บไฟล์ไว้กับตัวเอง อย่าส่งต่อ</li>
+            </ol>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Receipt Modal -->
   <div class="modal fade" id="receiptModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -2074,6 +2166,7 @@
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('app-container').style.display = 'block';
             initAppUI();
+            setTimeout(autoBackupCheck, 1500);
           } catch(err) { document.getElementById('loading-text').innerHTML = '<span style="color:#ef4444;">Frontend Error: ' + err.message + '</span>'; }
         })
         .withFailureHandler(function(err) { document.getElementById('loading-text').innerHTML = '<span style="color:#ef4444;">เชื่อมต่อล้มเหลว: ' + err.message + '</span><br><button class="g-btn g-btn-primary g-btn-sm" style="margin-top:12px;" onclick="loadAppData()">ลองใหม่</button>'; })
@@ -3447,6 +3540,99 @@
       if(aL&&!bL) return -1; if(!aL&&bL) return 1;
       return ra.localeCompare(rb,undefined,{numeric:true,sensitivity:'base'});
     });
+  }
+
+  // ===== สำรองข้อมูล =====
+  var _bkStatus = null, _bkError = '';
+  function _bkFmtTime(ts){
+    if(!ts) return '';
+    var d = new Date(ts), now = new Date();
+    var hm = ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    var day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    if (ts >= day0) return 'วันนี้ '+hm;
+    if (ts >= day0 - 86400000) return 'เมื่อวาน '+hm;
+    var days = Math.floor((day0 - ts) / 86400000) + 1;
+    if (days <= 30) return days+' วันที่แล้ว';
+    return d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+  }
+  function updateBackupUI(st){
+    if (st) _bkStatus = st;
+    var s = _bkStatus || {}, last = s.lastAt || 0, age = last ? (Date.now() - last) : Infinity;
+    var level = _bkError ? 'danger' : (!last || age > 7*86400000) ? 'danger' : (age > 2*86400000 ? 'warn' : 'ok');
+    var txt = _bkError ? 'สำรองอัตโนมัติไม่สำเร็จ' : (last ? 'ล่าสุด: '+_bkFmtTime(last) : 'ยังไม่เคยสำรอง!');
+    ['bk-side-btn','bk-mobile-btn'].forEach(function(id){ var b=document.getElementById(id); if(!b) return; b.classList.remove('warn','danger'); if(level!=='ok') b.classList.add(level); });
+    var a=document.getElementById('bk-side-status'); if(a) a.innerText = txt;
+    var m=document.getElementById('bk-mobile-status'); if(m) m.innerText = txt;
+    var box=document.getElementById('bk-status-box'); if(!box) return;
+    var col = level==='ok' ? ['#f0fdf4','#bbf7d0','#16a34a','fa-circle-check'] : level==='warn' ? ['#fffbeb','#fde68a','#d97706','fa-triangle-exclamation'] : ['#fef2f2','#fecaca','#dc2626','fa-circle-exclamation'];
+    box.style.background=col[0]; box.style.borderColor=col[1];
+    var ic=document.getElementById('bk-status-icon'); ic.className='fa-solid '+col[3]; ic.style.color=col[2];
+    document.getElementById('bk-status-title').innerText = last ? 'สำรองล่าสุด: '+_bkFmtTime(last)+' ('+new Date(last).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})+')' : 'ยังไม่เคยสำรองข้อมูล — กดปุ่มด้านล่างได้เลย';
+    document.getElementById('bk-status-sub').innerText = _bkError ? ('สำรองอัตโนมัติไม่สำเร็จ: '+_bkError) : 'ระบบสำรองอัตโนมัติวันละ 1 ครั้งเมื่อเปิดเว็บ (เก็บ 60 ไฟล์ล่าสุด) · ไฟล์ที่กดสำรองเองเก็บไว้ตลอด';
+    var fl=document.getElementById('bk-folder-link'); if(fl){ if(s.folderUrl){ fl.href=s.folderUrl; fl.style.display=''; } else fl.style.display='none'; }
+  }
+  function autoBackupCheck(){
+    google.script.run.withSuccessHandler(function(r){
+      r = r || {}; _bkError = r.ok ? '' : (r.error || 'ไม่ทราบสาเหตุ');
+      updateBackupUI(r.status);
+    }).withFailureHandler(function(){ updateBackupUI(); }).autoBackupIfDueBackend();
+  }
+  function openBackupModal(){
+    closeSidebar(); updateBackupUI();
+    var res=document.getElementById('bk-result'); if(res) res.style.display='none';
+    new bootstrap.Modal(document.getElementById('backupModal')).show();
+    loadBackupList();
+  }
+  function _bkSize(n){ return n>=1048576 ? (n/1048576).toFixed(1)+' MB' : Math.max(1,Math.round(n/1024))+' KB'; }
+  function loadBackupList(){
+    var tb=document.getElementById('bk-list');
+    google.script.run.withSuccessHandler(function(r){
+      if(!r || !r.ok){ tb.innerHTML='<tr><td style="text-align:center;padding:18px;color:#dc2626;">โหลดรายการไม่สำเร็จ</td></tr>'; return; }
+      if(r.status) updateBackupUI(r.status);
+      document.getElementById('bk-total').innerText = r.total ? '(ทั้งหมด '+r.total+' ไฟล์)' : '';
+      if(!r.files.length){ tb.innerHTML='<tr><td style="text-align:center;padding:18px;color:#64748b;">ยังไม่มีไฟล์สำรอง</td></tr>'; return; }
+      tb.innerHTML = r.files.map(function(f){
+        var badge = f.auto ? '<span class="g-badge badge-neutral">อัตโนมัติ</span>' : '<span class="g-badge badge-success">กดสำรองเอง</span>';
+        return '<tr><td style="white-space:nowrap;"><b>'+new Date(f.at).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})+'</b><div style="font-size:0.7rem;color:#64748b;">'+_bkFmtTime(f.at)+' · '+_bkSize(f.size)+'</div></td><td>'+badge+'</td>'
+          +'<td style="text-align:right;white-space:nowrap;"><button class="g-btn g-btn-sm me-1" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;" onclick="downloadBackupFile(\''+f.id+'\', this)"><i class="fa-solid fa-download me-1"></i>ดาวน์โหลด</button>'
+          +'<a class="g-btn g-btn-ghost g-btn-sm" href="'+f.url+'" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i></a></td></tr>';
+      }).join('');
+    }).withFailureHandler(function(e){ tb.innerHTML='<tr><td style="text-align:center;padding:18px;color:#dc2626;">'+(e&&e.message?e.message:'โหลดรายการไม่สำเร็จ')+'</td></tr>'; }).listBackupsBackend();
+  }
+  function _bkSaveBase64(name, b64){
+    var bin=atob(b64), len=bin.length, bytes=new Uint8Array(len);
+    for(var i=0;i<len;i++) bytes[i]=bin.charCodeAt(i);
+    var blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+  function _bkShowResult(ok, html){
+    var el=document.getElementById('bk-result'); if(!el) return;
+    el.style.display=''; el.style.background= ok?'#f0fdf4':'#fef2f2'; el.style.border='1px solid '+(ok?'#bbf7d0':'#fecaca'); el.style.color= ok?'#166534':'#b91c1c';
+    el.innerHTML=html;
+  }
+  function runBackupNow(withDl, btn){
+    var orig=btn.innerHTML; btn.disabled=true;
+    btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i><span><b>กำลังสำรองข้อมูล...</b><small>ใช้เวลาประมาณ 5-20 วินาที</small></span>';
+    google.script.run.withSuccessHandler(function(r){
+      btn.disabled=false; btn.innerHTML=orig;
+      if(!r || !r.ok) return _bkShowResult(false, '<i class="fa-solid fa-circle-xmark me-1"></i>สำรองไม่สำเร็จ: '+((r&&r.error)||'ไม่ทราบสาเหตุ'));
+      _bkError=''; updateBackupUI(r.status);
+      if(withDl && r.base64) _bkSaveBase64(r.name, r.base64);
+      _bkShowResult(true, '<i class="fa-solid fa-circle-check me-1"></i>สำรองเรียบร้อย: '+r.name+' ('+_bkSize(r.size)+')'+(withDl?' — ดาวน์โหลดลงเครื่องแล้ว':'')+' · <a href="'+r.url+'" target="_blank" rel="noopener">เปิดใน Drive</a>');
+      loadBackupList();
+    }).withFailureHandler(function(e){
+      btn.disabled=false; btn.innerHTML=orig;
+      _bkShowResult(false, '<i class="fa-solid fa-circle-xmark me-1"></i>สำรองไม่สำเร็จ: '+(e&&e.message?e.message:e));
+    }).backupNowBackend(!!withDl);
+  }
+  function downloadBackupFile(id, btn){
+    var orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i>';
+    google.script.run.withSuccessHandler(function(r){
+      btn.disabled=false; btn.innerHTML=orig;
+      if(!r || !r.ok) return alert((r&&r.error)||'ดาวน์โหลดไม่สำเร็จ');
+      _bkSaveBase64(r.name, r.base64);
+    }).withFailureHandler(function(e){ btn.disabled=false; btn.innerHTML=orig; alert('ดาวน์โหลดไม่สำเร็จ: '+(e&&e.message?e.message:e)); }).downloadBackupBackend(id);
   }
 
   // ===== ยกเลิกบิล (ไม่ลบข้อมูล) =====
