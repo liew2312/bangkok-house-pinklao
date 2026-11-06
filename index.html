@@ -1057,6 +1057,7 @@
         <div><h3>บันทึกการชำระเงิน</h3><p>รับชำระและติดตามสถานะการชำระเงิน</p></div>
       </div>
       <div class="g-card">
+        <div id="pay-vacant-banner" style="display:none;background:#fffbeb;border:1px solid #fde68a;color:#78350f;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:0.86rem;font-weight:600;"></div>
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <span style="font-size:0.85rem;color:#64748b;font-weight:600;">รอบบิล:</span>
@@ -1829,6 +1830,33 @@
     </div>
   </div>
 
+  <!-- Vacant-period bills Modal -->
+  <div class="modal fade" id="vacantBillsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+          <h5 class="modal-title text-white"><i class="fa-solid fa-door-open me-2"></i>บิลช่วงที่ห้องยังว่าง</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:0.85rem;color:#334155;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;">
+            รายการเหล่านี้เป็นเลขมิเตอร์ที่จดไว้<b>ก่อนเดือนที่ผู้เช่าปัจจุบันเริ่มสัญญา</b> (ตอนนั้นห้องยังว่าง) แต่ระบบเดิมบันทึกเป็น "ค้างชำระ"
+            ติ๊กรายการที่<b>ไม่ต้องเก็บเงิน</b> แล้วกดบันทึก → จะเปลี่ยนเป็น <b>"ห้องว่าง · ไม่มีบิล"</b><br>
+            <span style="color:#64748b;">เลขมิเตอร์ยังอยู่ครบ (ใช้คำนวณเดือนถัดไปตามปกติ) · ถ้าเลือกผิด กด "ดูบิลที่ยกเลิก / ห้องว่าง" ในหน้าชำระเงิน แล้วกด "เปลี่ยนเป็นบิล" ได้</span>
+          </p>
+          <div class="d-flex gap-2 mb-2">
+            <button type="button" class="g-btn g-btn-ghost g-btn-sm" onclick="vbToggleAll(true)">เลือกทั้งหมด</button>
+            <button type="button" class="g-btn g-btn-ghost g-btn-sm" onclick="vbToggleAll(false)">ไม่เลือกเลย</button>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <table class="g-table" style="margin:0;min-width:0;"><tbody id="vb-list"></tbody></table>
+          </div>
+          <button type="button" class="g-btn g-btn-full mt-3" style="background:#d97706;color:#fff;" onclick="submitVacantBills(this)"><i class="fa-solid fa-check me-1"></i>บันทึก: รายการที่เลือกเป็น "ห้องว่าง · ไม่มีบิล"</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Receipt Modal -->
   <div class="modal fade" id="receiptModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -2357,7 +2385,7 @@
           if(!t||t.status!=='มีคนพัก')return;
           for(var ki=0;ki<hD.length;ki++){
             if(hD[ki]&&hD[ki].room===t.room&&hD[ki].month===currentM){
-              if(hD[ki].payStatus!=='ชำระแล้ว' && !isBillCancelled(hD[ki]))uC++;
+              if(hD[ki].payStatus!=='ชำระแล้ว' && !isBillVoid(hD[ki]))uC++;
               break;
             }
           }
@@ -2749,7 +2777,7 @@
     var occ=(raw.tenants||[]).filter(function(t){ return t&&t.status==='มีคนพัก'; });
     for(var i=0;i<occ.length;i++){
       var room=occ[i].room, has=false;
-      for(var k=0;k<hist.length;k++){ if(hist[k]&&hist[k].room===room&&hist[k].month===month){ has=!isBillCancelled(hist[k]); break; } }
+      for(var k=0;k<hist.length;k++){ if(hist[k]&&hist[k].room===room&&hist[k].month===month){ has=!isBillVoid(hist[k]); break; } }
       if(!has) continue;
       if(!lineHasUser(room)){ noLink.push(room); continue; }
       var it=lineBillItem(room, month); if(it) items.push(it);
@@ -2822,11 +2850,11 @@
       for(var j=0;j<occ.length;j++){
         var t=occ[j]; var h=null;
         for(var k=0;k<historyData.length;k++){if(historyData[k]&&historyData[k].room===t.room&&historyData[k].month===month){h=historyData[k];break;}}
-        if(h && isBillCancelled(h)){
+        if(h && isBillVoid(h)){
           // บิลที่ยกเลิก: ไม่แสดงในรายการ/ไม่นับยอด (กดปุ่ม "บิลที่ยกเลิก" เพื่อดูและคืนบิล)
           _cancelN++;
           var _cb=calcRoomBill(t.room, month);
-          _cancelRows+='<tr class="pay-cancelled-row" style="opacity:.65;"><td><b style="font-size:1.05rem;color:#64748b;">'+t.room+'</b></td><td style="color:#64748b;">'+(t.name||'-')+'<div style="font-size:0.7rem;">'+(h.cancelInfo||'')+'</div></td><td style="text-align:right;color:#64748b;text-decoration:line-through;">'+(_cb?_cb.total.toLocaleString('en-US',{minimumFractionDigits:2}):'-')+'</td><td style="text-align:center">'+billStatusBadge(h)+'</td><td style="text-align:right;"><button class="g-btn g-btn-ghost g-btn-sm" onclick="restoreBill(\''+t.room+'\',\''+month+'\')"><i class="fa-solid fa-rotate-left me-1"></i>คืนบิล</button></td></tr>';
+          _cancelRows+='<tr class="pay-cancelled-row" style="opacity:.65;"><td><b style="font-size:1.05rem;color:#64748b;">'+t.room+'</b></td><td style="color:#64748b;">'+(t.name||'-')+'<div style="font-size:0.7rem;">'+(h.cancelInfo||'')+'</div></td><td style="text-align:right;color:#64748b;text-decoration:line-through;">'+(_cb?_cb.total.toLocaleString('en-US',{minimumFractionDigits:2}):'-')+'</td><td style="text-align:center">'+billStatusBadge(h)+'</td><td style="text-align:right;"><button class="g-btn g-btn-ghost g-btn-sm" onclick="restoreBill(\''+t.room+'\',\''+month+'\')"><i class="fa-solid fa-rotate-left me-1"></i>'+(isBillVacant(h)?'เปลี่ยนเป็นบิล':'คืนบิล')+'</button></td></tr>';
           continue;
         }
         if(h){
@@ -2875,9 +2903,10 @@
       }
       tbody += _cancelRows;
       var _ct=document.getElementById('pay-cancel-toggle');
-      if(_ct){ _ct.style.display=_cancelN?'':'none'; _ct.innerHTML='<i class="fa-solid fa-ban me-1"></i>'+(_payShowCancelled?'ซ่อน':'ดู')+'บิลที่ยกเลิก ('+_cancelN+')'; }
+      if(_ct){ _ct.style.display=_cancelN?'':'none'; _ct.innerHTML='<i class="fa-solid fa-ban me-1"></i>'+(_payShowCancelled?'ซ่อน':'ดู')+'บิลที่ยกเลิก / ห้องว่าง ('+_cancelN+')'; }
       var pl=document.getElementById('pay-page-list'); if(pl)pl.innerHTML=tbody||'<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748b;font-weight:700;">ไม่มีข้อมูลบิลในเดือนนี้</td></tr>';
       filterPaymentTable(_payFilter);
+      renderVacantBanner();
       var unpaid=totalAll-paidAll;
       var pst=document.getElementById('pay-sum-total'); if(pst)pst.innerText=totalAll.toLocaleString('en-US',{minimumFractionDigits:0})+' ฿';
       var psp=document.getElementById('pay-sum-paid'); if(psp)psp.innerText=paidAll.toLocaleString('en-US',{minimumFractionDigits:0})+' ฿';
@@ -2886,7 +2915,7 @@
       var hasBill=0,paidCnt=0,unpaidCnt=0;
       for(var x=0;x<occ.length;x++){
         var hx=null; for(var kx=0;kx<historyData.length;kx++){if(historyData[kx]&&historyData[kx].room===occ[x].room&&historyData[kx].month===month){hx=historyData[kx];break;}}
-        if(hx && !isBillCancelled(hx)){hasBill++; if(hx.payStatus==='ชำระแล้ว')paidCnt++; else unpaidCnt++;}
+        if(hx && !isBillVoid(hx)){hasBill++; if(hx.payStatus==='ชำระแล้ว')paidCnt++; else unpaidCnt++;}
       }
       var paidPct=hasBill>0?Math.round(paidCnt/hasBill*100):0;
       var unpaidPct=hasBill>0?Math.round(unpaidCnt/hasBill*100):0;
@@ -2912,7 +2941,7 @@
       for(var j=0;j<occ.length;j++) {
         var t = occ[j]; var h = null;
         for(var k=0;k<historyData.length;k++) { if(historyData[k]&&historyData[k].room===t.room&&historyData[k].month===month) { h=historyData[k]; break; } }
-        if(h && isBillCancelled(h)) { tbody += '<tr style="opacity:.6;"><td><b style="color:#64748b;">'+t.room+'</b></td><td style="color:#64748b;">'+(t.name||'-')+'</td><td style="text-align:center">'+billStatusBadge(h)+'</td><td style="text-align:right">-</td></tr>'; continue; }
+        if(h && isBillVoid(h)) { tbody += '<tr style="opacity:.6;"><td><b style="color:#64748b;">'+t.room+'</b></td><td style="color:#64748b;">'+(t.name||'-')+'</td><td style="text-align:center">'+billStatusBadge(h)+'</td><td style="text-align:right">-</td></tr>'; continue; }
         if(h) {
           var isPaid = (h.payStatus === 'ชำระแล้ว');
           var bill_rp=calcRoomBill(t.room, month);
@@ -2945,7 +2974,7 @@
       checkOverdue(occ, month); updateExpenseChart(expTotals);
       // Update payment nav badge from dashboard data
       var unpaidNavCnt=0;
-      for(var nb=0;nb<occ.length;nb++){var hn=null;for(var kn=0;kn<historyData.length;kn++){if(historyData[kn]&&historyData[kn].room===occ[nb].room&&historyData[kn].month===month){hn=historyData[kn];break;}}if(hn&&hn.payStatus!=='ชำระแล้ว'&&!isBillCancelled(hn))unpaidNavCnt++;}
+      for(var nb=0;nb<occ.length;nb++){var hn=null;for(var kn=0;kn<historyData.length;kn++){if(historyData[kn]&&historyData[kn].room===occ[nb].room&&historyData[kn].month===month){hn=historyData[kn];break;}}if(hn&&hn.payStatus!=='ชำระแล้ว'&&!isBillVoid(hn))unpaidNavCnt++;}
       var payBadge2=document.getElementById('payment-nav-badge');
       if(payBadge2){payBadge2.innerText=unpaidNavCnt;payBadge2.style.display=unpaidNavCnt>0?'inline-block':'none';}
       // Sync payments page
@@ -3282,8 +3311,8 @@
         continue;
       }
 
-      if(isBillCancelled(h)){
-        aoa.push([seq, t.room, roomStatus, t.name||'-', '-','-','-','-','-','-','-','ยกเลิกบิล','-', h.cancelInfo||'']);
+      if(isBillVoid(h)){
+        aoa.push([seq, t.room, roomStatus, t.name||'-', '-','-','-','-','-','-','-',(isBillVacant(h)?'ห้องว่าง (ไม่มีบิล)':'ยกเลิกบิล'),'-', h.cancelInfo||'']);
         continue;
       }
       var bill=calcRoomBill(t.room,month);
@@ -3434,7 +3463,7 @@
       for(var i=0;i<occupied.length;i++) {
         var t=occupied[i]; var h=null;
         if(raw.history&&Array.isArray(raw.history)){for(var j=0;j<raw.history.length;j++){if(raw.history[j]&&raw.history[j].room===t.room&&raw.history[j].month===month){h=raw.history[j];break;}}}
-        if(h&&h.payStatus!=='ชำระแล้ว'&&!isBillCancelled(h)) overdueList.push(t);
+        if(h&&h.payStatus!=='ชำระแล้ว'&&!isBillVoid(h)) overdueList.push(t);
       }
       if(countBadge){countBadge.style.display=overdueList.length>0?'inline-block':'none';countBadge.innerText=overdueList.length;}
       if(overdueList.length>0) {
@@ -3559,7 +3588,7 @@
     if (st) _bkStatus = st;
     var s = _bkStatus || {}, last = s.lastAt || 0, age = last ? (Date.now() - last) : Infinity;
     var level = _bkError ? 'danger' : (!last || age > 7*86400000) ? 'danger' : (age > 2*86400000 ? 'warn' : 'ok');
-    var txt = _bkError ? 'สำรองอัตโนมัติไม่สำเร็จ' : (last ? 'ล่าสุด: '+_bkFmtTime(last) : 'ยังไม่เคยสำรอง!');
+    var txt = _bkError ? 'สำรองไม่สำเร็จ — กดดูสาเหตุ' : (last ? 'ล่าสุด: '+_bkFmtTime(last) : 'ยังไม่เคยสำรอง!');
     ['bk-side-btn','bk-mobile-btn'].forEach(function(id){ var b=document.getElementById(id); if(!b) return; b.classList.remove('warn','danger'); if(level!=='ok') b.classList.add(level); });
     var a=document.getElementById('bk-side-status'); if(a) a.innerText = txt;
     var m=document.getElementById('bk-mobile-status'); if(m) m.innerText = txt;
@@ -3567,15 +3596,22 @@
     var col = level==='ok' ? ['#f0fdf4','#bbf7d0','#16a34a','fa-circle-check'] : level==='warn' ? ['#fffbeb','#fde68a','#d97706','fa-triangle-exclamation'] : ['#fef2f2','#fecaca','#dc2626','fa-circle-exclamation'];
     box.style.background=col[0]; box.style.borderColor=col[1];
     var ic=document.getElementById('bk-status-icon'); ic.className='fa-solid '+col[3]; ic.style.color=col[2];
-    document.getElementById('bk-status-title').innerText = last ? 'สำรองล่าสุด: '+_bkFmtTime(last)+' ('+new Date(last).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})+')' : 'ยังไม่เคยสำรองข้อมูล — กดปุ่มด้านล่างได้เลย';
-    document.getElementById('bk-status-sub').innerText = _bkError ? ('สำรองอัตโนมัติไม่สำเร็จ: '+_bkError) : 'ระบบสำรองอัตโนมัติวันละ 1 ครั้งเมื่อเปิดเว็บ (เก็บ 60 ไฟล์ล่าสุด) · ไฟล์ที่กดสำรองเองเก็บไว้ตลอด';
+    document.getElementById('bk-status-title').innerText = _bkError && !last ? 'สำรองข้อมูลไม่สำเร็จ' : last ? 'สำรองล่าสุด: '+_bkFmtTime(last)+' ('+new Date(last).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})+')' : 'ยังไม่เคยสำรองข้อมูล — กดปุ่มด้านล่างได้เลย';
+    document.getElementById('bk-status-sub').innerText = _bkError ? ('สาเหตุ: '+_bkError) : 'ระบบสำรองอัตโนมัติวันละ 1 ครั้งเมื่อเปิดเว็บ (เก็บ 60 ไฟล์ล่าสุด) · ไฟล์ที่กดสำรองเองเก็บไว้ตลอด';
     var fl=document.getElementById('bk-folder-link'); if(fl){ if(s.folderUrl){ fl.href=s.folderUrl; fl.style.display=''; } else fl.style.display='none'; }
   }
   function autoBackupCheck(){
     google.script.run.withSuccessHandler(function(r){
       r = r || {}; _bkError = r.ok ? '' : (r.error || 'ไม่ทราบสาเหตุ');
       updateBackupUI(r.status);
-    }).withFailureHandler(function(){ updateBackupUI(); }).autoBackupIfDueBackend();
+    }).withFailureHandler(function(e){ _bkError = _bkErrMsg(e); updateBackupUI(); }).autoBackupIfDueBackend();
+  }
+  // แปลข้อความผิดพลาดให้อ่านเข้าใจ (กรณีพบบ่อย: ฝั่ง Apps Script ยังไม่ได้ Deploy เวอร์ชันใหม่)
+  function _bkErrMsg(e){
+    var m = String(e && e.message ? e.message : (e || 'ไม่ทราบสาเหตุ'));
+    if (m.indexOf('ไม่รู้จักคำสั่ง') > -1) return 'ฝั่ง Apps Script ยังเป็นโค้ดเก่า — วาง Code.js ใหม่ แล้ว Deploy → Manage deployments → แก้ไข → New version';
+    if (/permission|สิทธิ์|authoriz/i.test(m)) return 'Apps Script ยังไม่ได้รับอนุญาตใช้ Google Drive — เปิดหน้า Apps Script เลือกฟังก์ชัน testBackup แล้วกด Run และกดอนุญาต';
+    return m;
   }
   function openBackupModal(){
     closeSidebar(); updateBackupUI();
@@ -3597,7 +3633,7 @@
           +'<td style="text-align:right;white-space:nowrap;"><button class="g-btn g-btn-sm me-1" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;" onclick="downloadBackupFile(\''+f.id+'\', this)"><i class="fa-solid fa-download me-1"></i>ดาวน์โหลด</button>'
           +'<a class="g-btn g-btn-ghost g-btn-sm" href="'+f.url+'" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i></a></td></tr>';
       }).join('');
-    }).withFailureHandler(function(e){ tb.innerHTML='<tr><td style="text-align:center;padding:18px;color:#dc2626;">'+(e&&e.message?e.message:'โหลดรายการไม่สำเร็จ')+'</td></tr>'; }).listBackupsBackend();
+    }).withFailureHandler(function(e){ tb.innerHTML='<tr><td style="text-align:center;padding:18px;color:#dc2626;">'+_bkErrMsg(e)+'</td></tr>'; }).listBackupsBackend();
   }
   function _bkSaveBase64(name, b64){
     var bin=atob(b64), len=bin.length, bytes=new Uint8Array(len);
@@ -3616,14 +3652,15 @@
     btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i><span><b>กำลังสำรองข้อมูล...</b><small>ใช้เวลาประมาณ 5-20 วินาที</small></span>';
     google.script.run.withSuccessHandler(function(r){
       btn.disabled=false; btn.innerHTML=orig;
-      if(!r || !r.ok) return _bkShowResult(false, '<i class="fa-solid fa-circle-xmark me-1"></i>สำรองไม่สำเร็จ: '+((r&&r.error)||'ไม่ทราบสาเหตุ'));
+      if(!r || !r.ok){ _bkError=_bkErrMsg((r&&r.error)||''); updateBackupUI(); return _bkShowResult(false, '<i class="fa-solid fa-circle-xmark me-1"></i>สำรองไม่สำเร็จ: '+_bkError); }
       _bkError=''; updateBackupUI(r.status);
       if(withDl && r.base64) _bkSaveBase64(r.name, r.base64);
       _bkShowResult(true, '<i class="fa-solid fa-circle-check me-1"></i>สำรองเรียบร้อย: '+r.name+' ('+_bkSize(r.size)+')'+(withDl?' — ดาวน์โหลดลงเครื่องแล้ว':'')+' · <a href="'+r.url+'" target="_blank" rel="noopener">เปิดใน Drive</a>');
       loadBackupList();
     }).withFailureHandler(function(e){
       btn.disabled=false; btn.innerHTML=orig;
-      _bkShowResult(false, '<i class="fa-solid fa-circle-xmark me-1"></i>สำรองไม่สำเร็จ: '+(e&&e.message?e.message:e));
+      _bkError=_bkErrMsg(e); updateBackupUI();
+      _bkShowResult(false, '<i class="fa-solid fa-circle-xmark me-1"></i>สำรองไม่สำเร็จ: '+_bkError);
     }).backupNowBackend(!!withDl);
   }
   function downloadBackupFile(id, btn){
@@ -3635,11 +3672,81 @@
     }).withFailureHandler(function(e){ btn.disabled=false; btn.innerHTML=orig; alert('ดาวน์โหลดไม่สำเร็จ: '+(e&&e.message?e.message:e)); }).downloadBackupBackend(id);
   }
 
+  // ===== บิลช่วงห้องว่าง (ก่อนผู้เช่าปัจจุบันย้ายเข้า) =====
+  // ระบบเดิมบันทึกเลขมิเตอร์ของห้องว่างเป็น "ค้างชำระ" → พอมีผู้เช่าใหม่ บิลเดือนที่ห้องยังว่างจึงขึ้นค้างชำระ
+  function _ymOfDate(v){
+    if(!v) return null; var s=String(v).trim(), d, m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(m){ var yy=+m[3]; if(yy>2400) yy-=543; d=new Date(yy, +m[2]-1, +m[1]); } else d=new Date(s);
+    if(isNaN(d.getTime())) return null;
+    var y=d.getFullYear(); if(y>2400){ y-=543; d=new Date(y, d.getMonth(), d.getDate()); }
+    return { ym: y*12+d.getMonth(), date: d };
+  }
+  function findVacantPeriodBills(){
+    var out=[], hist=Array.isArray(raw.history)?raw.history:[];
+    (raw.tenants||[]).forEach(function(t){
+      if(!t || t.status!=='มีคนพัก') return;
+      var st=_ymOfDate(t.start); if(!st) return;
+      hist.forEach(function(h){
+        if(!h || h.room!==t.room || !h.month) return;
+        if(h.payStatus==='ชำระแล้ว' || isBillVoid(h)) return;
+        var p=h.month.split('/'); if(p.length!==2) return;
+        if((+p[1])*12+(+p[0]-1) >= st.ym) return;          // เดือนที่จดมิเตอร์ อยู่ก่อนเดือนที่เริ่มสัญญา
+        var b=calcRoomBill(h.room, h.month);
+        out.push({ room:h.room, month:h.month, name:t.name||'', start:st.date, total:b?b.total:0, first:!!(b && !b.hasPrev) });
+      });
+    });
+    out.sort(function(a,b){ var c=String(a.room).localeCompare(String(b.room),undefined,{numeric:true}); if(c) return c; var pa=a.month.split('/'), pb=b.month.split('/'); return (pa[1]*12+ +pa[0])-(pb[1]*12+ +pb[0]); });
+    return out;
+  }
+  function renderVacantBanner(){
+    var el=document.getElementById('pay-vacant-banner'); if(!el) return;
+    var list=findVacantPeriodBills();
+    if(!list.length){ el.style.display='none'; return; }
+    var rooms={}; list.forEach(function(x){ rooms[x.room]=1; });
+    el.style.display='';
+    el.innerHTML='<i class="fa-solid fa-triangle-exclamation me-2" style="color:#d97706;"></i>พบ <b>'+list.length+' บิล</b> ของช่วงที่ห้องยังว่าง (ก่อนวันเริ่มสัญญาผู้เช่าปัจจุบัน) ที่ยังขึ้น "ค้างชำระ" · ห้อง '+Object.keys(rooms).slice(0,8).join(', ')+(Object.keys(rooms).length>8?' …':'')
+      +' <button class="g-btn g-btn-sm ms-2" style="background:#d97706;color:#fff;" onclick="openVacantBillsModal()"><i class="fa-solid fa-list-check me-1"></i>ตรวจสอบและแก้ไข</button>';
+  }
+  function openVacantBillsModal(){
+    var list=findVacantPeriodBills(); window._vacList=list;
+    var tb=document.getElementById('vb-list');
+    tb.innerHTML = list.length ? list.map(function(x,i){
+      var sd=x.start.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+      return '<tr><td style="width:34px;"><input type="checkbox" class="vb-chk" data-i="'+i+'" checked style="width:17px;height:17px;"></td>'
+        +'<td><b>'+x.room+'</b><div style="font-size:0.7rem;color:#64748b;">'+(x.name||'')+'</div></td>'
+        +'<td>รอบบิล <b>'+billLabel(x.month)+'</b><div style="font-size:0.7rem;color:#64748b;">จดมิเตอร์ '+x.month+'</div></td>'
+        +'<td style="font-size:0.8rem;">เริ่มสัญญา<br><b>'+sd+'</b></td>'
+        +'<td style="text-align:right;font-weight:700;color:#dc2626;">'+(x.first?'<span style="color:#64748b;font-weight:600;font-size:0.75rem;">เลขตั้งต้น</span>':'฿'+x.total.toLocaleString('en-US',{minimumFractionDigits:2}))+'</td></tr>';
+    }).join('') : '<tr><td style="text-align:center;padding:18px;color:#64748b;">ไม่พบรายการ</td></tr>';
+    new bootstrap.Modal(document.getElementById('vacantBillsModal')).show();
+  }
+  function vbToggleAll(on){ document.querySelectorAll('.vb-chk').forEach(function(c){ c.checked=on; }); }
+  function submitVacantBills(btn){
+    var list=window._vacList||[], pick=[];
+    document.querySelectorAll('.vb-chk').forEach(function(c){ if(c.checked){ var x=list[+c.dataset.i]; if(x) pick.push({room:x.room, month:x.month, note:'ก่อนผู้เช่าเริ่มสัญญา'}); } });
+    if(!pick.length) return alert('ยังไม่ได้เลือกรายการ');
+    var orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin me-1"></i>กำลังบันทึก...';
+    google.script.run.withSuccessHandler(function(r){
+      btn.disabled=false; btn.innerHTML=orig; r=r||'';
+      if(r.indexOf('SUCCESS')!==0) return alert(r.replace('ERROR:','').trim());
+      var key={}; pick.forEach(function(p){ key[p.room+'|'+p.month]=1; });
+      (raw.history||[]).forEach(function(h){ if(h && key[h.room+'|'+h.month] && h.payStatus!=='ชำระแล้ว'){ h.payStatus=BILL_VACANT; h.cancelInfo='ห้องว่าง (ไม่มีบิล) · ก่อนผู้เช่าเริ่มสัญญา'; } });
+      var md=bootstrap.Modal.getInstance(document.getElementById('vacantBillsModal')); if(md) md.hide();
+      alert(r.replace('SUCCESS:','').trim());
+      try{ renderPaymentsPage(); }catch(e){} try{ renderPayments(); }catch(e){}
+    }).withFailureHandler(function(e){ btn.disabled=false; btn.innerHTML=orig; alert('บันทึกไม่สำเร็จ: '+(e&&e.message?e.message:e)); }).markVacantBillsBackend(pick);
+  }
+
   // ===== ยกเลิกบิล (ไม่ลบข้อมูล) =====
   var BILL_CANCELLED = 'ยกเลิกบิล';
   function isBillCancelled(h){ return !!h && String(h.payStatus||'').trim() === BILL_CANCELLED; }
+  // "ห้องว่าง" = จดมิเตอร์ไว้แต่ช่วงนั้นไม่มีผู้เช่า → ไม่มีบิล (ไม่นับค้างชำระ/รายได้)
+  var BILL_VACANT = 'ห้องว่าง';
+  function isBillVacant(h){ return !!h && String(h.payStatus||'').trim() === BILL_VACANT; }
+  function isBillVoid(h){ return isBillCancelled(h) || isBillVacant(h); }
   function billStatusBadge(h){
     if (isBillCancelled(h)) return '<span class="g-badge badge-neutral" title="'+String((h&&h.cancelInfo)||'').replace(/"/g,'&quot;')+'"><i class="fa-solid fa-ban me-1"></i>ยกเลิกบิล</span>';
+    if (isBillVacant(h)) return '<span class="g-badge badge-neutral" title="'+String((h&&h.cancelInfo)||'').replace(/"/g,'&quot;')+'"><i class="fa-solid fa-door-open me-1"></i>ห้องว่าง · ไม่มีบิล</span>';
     return (h && h.payStatus==='ชำระแล้ว') ? '<span class="g-badge badge-success">ชำระแล้ว</span>' : '<span class="g-badge badge-danger">ค้างชำระ</span>';
   }
   var _cancelTarget = null;
@@ -3669,7 +3776,8 @@
       .cancelBillBackend(room, month, reason);
   }
   function restoreBill(room, month){
-    if(!confirm('คืนบิลห้อง '+room+' รอบ '+billLabel(month)+' กลับเป็น "ค้างชำระ" ?')) return;
+    var _hv=rhHist(room, month);
+    if(!confirm(isBillVacant(_hv) ? ('เปลี่ยนห้อง '+room+' รอบบิล '+billLabel(month)+' จาก "ห้องว่าง" เป็นบิลค้างชำระ (คิดค่าเช่าปัจจุบัน) ?') : ('คืนบิลห้อง '+room+' รอบ '+billLabel(month)+' กลับเป็น "ค้างชำระ" ?'))) return;
     google.script.run.withSuccessHandler(function(r){
       r = r || '';
       if (r.indexOf('SUCCESS') !== 0) return alert(r.replace('ERROR:','').trim());
@@ -3936,7 +4044,7 @@
           tooltip:{ titleFont:{family:'Noto Sans Thai'}, bodyFont:{family:'Noto Sans Thai'}, footerFont:{family:'Noto Sans Thai'}, padding:10, cornerRadius:8,
             filter:function(c){ return c.parsed.y>0; },
             callbacks:{ label:function(c){ return c.dataset.label+': ฿'+rhFmt(c.parsed.y); },
-              footer:function(items){ var r=rr[items[0].dataIndex]; return r ? 'รวม ฿'+rhFmt(r.b.total)+(isBillCancelled(r.h)?' (ยกเลิกบิล)':(r.h&&r.h.payStatus==='ชำระแล้ว'?' (ชำระแล้ว)':' (ค้างชำระ)')) : ''; } } } },
+              footer:function(items){ var r=rr[items[0].dataIndex]; return r ? 'รวม ฿'+rhFmt(r.b.total)+(isBillVacant(r.h)?' (ห้องว่าง · ไม่มีบิล)':isBillCancelled(r.h)?' (ยกเลิกบิล)':(r.h&&r.h.payStatus==='ชำระแล้ว'?' (ชำระแล้ว)':' (ค้างชำระ)')) : ''; } } } },
         scales:{ x:{ stacked:true, grid:{display:false}, ticks:{ font:{family:'Noto Sans Thai', size:11}, color:'#64748b' } },
           y:{ stacked:true, beginAtZero:true, grid:{ color:'#eef2f7' }, border:{display:false}, ticks:{ font:{size:11}, color:'#64748b', callback:function(v){ return '฿'+rhFmt(v); } } } } }
     });
@@ -4467,7 +4575,7 @@
         }
         for(var i=0;i<res.invoices.length;i++){
           var inv=res.invoices[i];
-          if(isBillCancelled(rhHist(inv.room, month))) continue; // บิลที่ยกเลิกไม่ออกใบแจ้งหนี้
+          if(isBillVoid(rhHist(inv.room, month))) continue; // บิลที่ยกเลิกไม่ออกใบแจ้งหนี้
           if((mode==='occupied'&&inv.status==='มีคนพัก')||(mode==='all')||(mode==='vacant'&&inv.status!=='มีคนพัก')||(mode==='specific'&&checkedRooms[inv.room])){
             filtered.push(inv);
           }
@@ -4744,7 +4852,7 @@
           +'<td style="text-align:right;color:#fbbf24;font-weight:700;">'+eBillAmt.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td>'
           +'<td style="text-align:right;font-weight:700;">'+tot.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td>'
           +'<td style="text-align:right">'+lateFeeHtml+'</td>'
-          +'<td style="color:'+(isBillCancelled(h)?'#64748b':(paid?'#16a34a':'#dc2626'))+';font-weight:700;">'+h.payStatus+'</td>'
+          +'<td style="color:'+(isBillVoid(h)?'#64748b':(paid?'#16a34a':'#dc2626'))+';font-weight:700;">'+h.payStatus+'</td>'
           +'</tr>';
       });
     }
@@ -4841,6 +4949,7 @@
       if (isPaid && h.paidDate) { var _d = new Date(h.paidDate); if (!isNaN(_d.getTime())) pd = _d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}); }
       // เดือนแรกของห้อง = เลขมิเตอร์ตั้งต้น ไม่ใช่บิลจริง (หน่วยจะเท่ากับเลขทั้งหมด) จึงไม่นับในรายงาน
       if (bill && !bill.hasPrev) return { roomStatus: t.status, vacant:false, hasMeters:false, start:true, payStatus:'เลขมิเตอร์เริ่มต้น', payMethod:'', paidDate:'', rent:null, water:null, elec:null, common:null, late:null };
+      if (isBillVacant(h)) return { roomStatus: 'ห้องว่าง (ไม่มีบิล)', vacant:true, hasMeters:false, payStatus:null, payMethod:'', paidDate:'', rent:null, water:null, elec:null, common:null, late:null };
       if (bill && isBillCancelled(h)) {
         return { roomStatus: t.status, vacant:false, hasMeters:true, cancelled:true, cancelInfo: h.cancelInfo || '', payStatus: BILL_CANCELLED, payMethod:'', paidDate:'', rent: bill.rent, water: bill.wBill, elec: bill.eBill, common: bill.common, late: opt.late ? getLateFeeOf(bill) : 0 };
       }
