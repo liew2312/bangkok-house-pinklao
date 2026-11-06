@@ -1021,6 +1021,7 @@
             <select id="pay-page-month" class="g-select" style="width:auto;padding-top:7px;padding-bottom:7px;border-color:#22c55e;font-size:0.9rem;" onchange="renderPaymentsPage()"></select>
             <button class="g-btn g-btn-sm" style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;" onclick="exportPaymentsData()"><i class="fa-solid fa-file-excel me-1"></i>Export Excel</button>
             <button class="g-btn g-btn-sm" style="background:#dcfce7;color:#16a34a;border:1px solid #86efac;" onclick="sendAllBillsLine()"><i class="fa-brands fa-line me-1"></i>ส่งบิลทั้งรอบทางไลน์</button>
+            <button class="g-btn g-btn-sm" id="pay-cancel-toggle" style="display:none;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;" onclick="togglePayCancelled()"></button>
           </div>
           <div class="d-flex gap-2 flex-wrap">
             <div onclick="filterPaymentTable('all')" id="pay-filter-all" style="background:#f8fafc;border:2px solid #3b82f6;border-radius:50%;width:80px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;box-shadow:0 0 0 3px #ede9fe;">
@@ -1348,6 +1349,7 @@
                       <option value="all">ทั้งหมด</option>
                       <option value="paid">ชำระแล้ว</option>
                       <option value="unpaid">ค้างชำระ</option>
+                      <option value="cancelled">ยกเลิกบิล</option>
                     </select>
                   </div>
                   <div class="col-6">
@@ -1701,6 +1703,35 @@
             <button type="button" class="g-btn g-btn-ghost g-btn-full" onclick="saveLateFee('', this)"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกอย่างเดียว</button>
           </div>
           <p style="font-size:0.72rem;color:#64748b;margin:10px 0 0;"><i class="fa-solid fa-circle-info me-1"></i>ระบบไม่คิดค่าปรับอัตโนมัติ ตัวเลขที่กรอกจะบันทึกลงบิลรอบนี้ และใช้ร่วมกับใบแจ้งหนี้ ใบเสร็จ ไลน์ และรายงาน</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Bill Modal (ยกเลิกบิล — ไม่ลบข้อมูล) -->
+  <div class="modal fade" id="cancelBillModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background:linear-gradient(135deg,#64748b,#334155);">
+          <h5 class="modal-title text-white"><i class="fa-solid fa-ban me-2"></i>ยกเลิกบิล: ห้อง <span id="cb-room"></span> <span style="font-size:0.85rem;opacity:.9;">· รอบบิล <span id="cb-month"></span></span></h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#64748b;font-weight:600;">ยอดบิลที่จะยกเลิก</span><span style="font-size:1.3rem;font-weight:900;color:#334155;">฿<span id="cb-amount">0</span></span>
+          </div>
+          <div class="mb-2">
+            <label class="g-label">เหตุผล <span style="font-size:0.72rem;color:#64748b;font-weight:500;">(ไม่บังคับ แต่ช่วยให้ย้อนดูง่าย)</span></label>
+            <input type="text" id="cb-reason" class="g-input" placeholder="เช่น ออกบิลผิด, ผู้เช่าย้ายออก, ยกเว้นค่าเช่า">
+          </div>
+          <div class="mb-3" style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="g-btn g-btn-ghost g-btn-sm" onclick="cbPreset('ออกบิลผิด')">ออกบิลผิด</button>
+            <button type="button" class="g-btn g-btn-ghost g-btn-sm" onclick="cbPreset('ผู้เช่าย้ายออก')">ผู้เช่าย้ายออก</button>
+            <button type="button" class="g-btn g-btn-ghost g-btn-sm" onclick="cbPreset('ยกเว้นค่าเช่า')">ยกเว้นค่าเช่า</button>
+            <button type="button" class="g-btn g-btn-ghost g-btn-sm" onclick="cbPreset('บิลซ้ำ')">บิลซ้ำ</button>
+          </div>
+          <p style="font-size:0.78rem;color:#475569;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 12px;margin-bottom:14px;"><i class="fa-solid fa-circle-info me-1"></i>ข้อมูลไม่ถูกลบ: เลขมิเตอร์ ค่าปรับ และรายการปรับยอดยังอยู่ครบ บิลนี้จะหายจากหน้าชำระเงินและไม่นับเป็นค้างชำระ ดูย้อนหลังได้ในหน้ารายงานสรุป และกด "คืนบิล" ได้ภายหลัง</p>
+          <button type="button" class="g-btn g-btn-danger g-btn-full" onclick="submitCancelBill(this)"><i class="fa-solid fa-ban me-1"></i> ยืนยันยกเลิกบิล</button>
         </div>
       </div>
     </div>
@@ -2233,7 +2264,7 @@
           if(!t||t.status!=='มีคนพัก')return;
           for(var ki=0;ki<hD.length;ki++){
             if(hD[ki]&&hD[ki].room===t.room&&hD[ki].month===currentM){
-              if(hD[ki].payStatus!=='ชำระแล้ว')uC++;
+              if(hD[ki].payStatus!=='ชำระแล้ว' && !isBillCancelled(hD[ki]))uC++;
               break;
             }
           }
@@ -2625,7 +2656,7 @@
     var occ=(raw.tenants||[]).filter(function(t){ return t&&t.status==='มีคนพัก'; });
     for(var i=0;i<occ.length;i++){
       var room=occ[i].room, has=false;
-      for(var k=0;k<hist.length;k++){ if(hist[k]&&hist[k].room===room&&hist[k].month===month){ has=true; break; } }
+      for(var k=0;k<hist.length;k++){ if(hist[k]&&hist[k].room===room&&hist[k].month===month){ has=!isBillCancelled(hist[k]); break; } }
       if(!has) continue;
       if(!lineHasUser(room)){ noLink.push(room); continue; }
       var it=lineBillItem(room, month); if(it) items.push(it);
@@ -2670,6 +2701,7 @@
     // Filter table rows
     var rows = document.querySelectorAll('#pay-page-list tr');
     rows.forEach(function(row) {
+      if (row.classList.contains('pay-cancelled-row')) { row.style.display = (_payShowCancelled && mode === 'all') ? '' : 'none'; return; }
       if (mode === 'all') { row.style.display = ''; return; }
       var badge = row.querySelector('.g-badge');
       if (!badge) { row.style.display = mode === 'all' ? '' : 'none'; return; }
@@ -2692,10 +2724,18 @@
       });
       for(var i=0;i<tenants.length;i++){if(tenants[i]&&tenants[i].status==='มีคนพัก')occ.push(tenants[i]);}
       var totalAll=0,paidAll=0,tbody='';
+      var _cancelN=0, _cancelRows='';
       var historyData=Array.isArray(raw.history)?raw.history:[];
       for(var j=0;j<occ.length;j++){
         var t=occ[j]; var h=null;
         for(var k=0;k<historyData.length;k++){if(historyData[k]&&historyData[k].room===t.room&&historyData[k].month===month){h=historyData[k];break;}}
+        if(h && isBillCancelled(h)){
+          // บิลที่ยกเลิก: ไม่แสดงในรายการ/ไม่นับยอด (กดปุ่ม "บิลที่ยกเลิก" เพื่อดูและคืนบิล)
+          _cancelN++;
+          var _cb=calcRoomBill(t.room, month);
+          _cancelRows+='<tr class="pay-cancelled-row" style="opacity:.65;"><td><b style="font-size:1.05rem;color:#64748b;">'+t.room+'</b></td><td style="color:#64748b;">'+(t.name||'-')+'<div style="font-size:0.7rem;">'+(h.cancelInfo||'')+'</div></td><td style="text-align:right;color:#64748b;text-decoration:line-through;">'+(_cb?_cb.total.toLocaleString('en-US',{minimumFractionDigits:2}):'-')+'</td><td style="text-align:center">'+billStatusBadge(h)+'</td><td style="text-align:right;"><button class="g-btn g-btn-ghost g-btn-sm" onclick="restoreBill(\''+t.room+'\',\''+month+'\')"><i class="fa-solid fa-rotate-left me-1"></i>คืนบิล</button></td></tr>';
+          continue;
+        }
         if(h){
           var isPaid=(h.payStatus==='ชำระแล้ว');
           var bill=calcRoomBill(t.room, month);
@@ -2725,7 +2765,7 @@
             var recLineBtn=lineHasUser(t.room)?'<button class="g-btn g-btn-sm me-1" style="background:#dcfce7;color:#166534;border:1px solid #86efac;" title="ส่งใบเสร็จให้ลูกบ้านทางไลน์" onclick="sendReceiptLine(\''+t.room+'\',\''+month+'\')"><i class="fa-brands fa-line me-1"></i>ส่งใบเสร็จ</button>':'';
             actionBtns=slipBtn+recLineBtn+'<button class="g-btn g-btn-ghost g-btn-sm me-1" onclick="cancelPayment(\''+t.room+'\',\''+month+'\', this)">ยกเลิก</button><button class="g-btn g-btn-sm" style="background:#eff6ff;color:#1d4ed8;" onclick="showReceipt(\''+t.room+'\',\''+month+'\')"><i class="fa-solid fa-receipt me-1"></i>ใบเสร็จ</button>';
           }
-          else{actionBtns='<button class="g-btn g-btn-sm me-1" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="กรอกค่าปรับเอง แล้วออกบิลใหม่" onclick="openLateFeeModal(\''+t.room+'\',\''+month+'\')"><i class="fa-solid fa-triangle-exclamation me-1"></i>ค่าปรับ</button><button class="g-btn g-btn-success g-btn-sm" onclick="openPaymentModal(\''+t.room+'\',\''+month+'\','+grandTotal+')"><i class="fa-solid fa-check me-1"></i>รับชำระ</button>';}
+          else{actionBtns='<button class="g-btn g-btn-sm me-1" style="background:#fff;color:#64748b;border:1px solid #cbd5e1;" title="ยกเลิกบิล (ข้อมูลไม่ถูกลบ)" onclick="openCancelBill(\''+t.room+'\',\''+month+'\')"><i class="fa-solid fa-ban me-1"></i>ยกเลิกบิล</button><button class="g-btn g-btn-sm me-1" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="กรอกค่าปรับเอง แล้วออกบิลใหม่" onclick="openLateFeeModal(\''+t.room+'\',\''+month+'\')"><i class="fa-solid fa-triangle-exclamation me-1"></i>ค่าปรับ</button><button class="g-btn g-btn-success g-btn-sm" onclick="openPaymentModal(\''+t.room+'\',\''+month+'\','+grandTotal+')"><i class="fa-solid fa-check me-1"></i>รับชำระ</button>';}
           var lineBtn;
           var _unlink = '<button class="g-btn g-btn-sm me-1" title="ยกเลิกผูกไลน์ (เปลี่ยนผู้เช่า)" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;padding:4px 8px;" onclick="unlinkLine(\''+t.room+'\')"><i class="fa-solid fa-link-slash"></i></button>';
           if (lineIsSent(t.room, month)) {
@@ -2740,6 +2780,9 @@
           tbody+='<tr><td><b style="color:#64748b;">'+t.room+'</b></td><td style="color:#64748b;">'+(t.name||'-')+'</td><td style="text-align:right;color:#64748b;">-</td><td style="text-align:center"><span class="g-badge badge-neutral">รอจดมิเตอร์</span></td><td style="text-align:right">-</td></tr>';
         }
       }
+      tbody += _cancelRows;
+      var _ct=document.getElementById('pay-cancel-toggle');
+      if(_ct){ _ct.style.display=_cancelN?'':'none'; _ct.innerHTML='<i class="fa-solid fa-ban me-1"></i>'+(_payShowCancelled?'ซ่อน':'ดู')+'บิลที่ยกเลิก ('+_cancelN+')'; }
       var pl=document.getElementById('pay-page-list'); if(pl)pl.innerHTML=tbody||'<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748b;font-weight:700;">ไม่มีข้อมูลบิลในเดือนนี้</td></tr>';
       filterPaymentTable(_payFilter);
       var unpaid=totalAll-paidAll;
@@ -2750,7 +2793,7 @@
       var hasBill=0,paidCnt=0,unpaidCnt=0;
       for(var x=0;x<occ.length;x++){
         var hx=null; for(var kx=0;kx<historyData.length;kx++){if(historyData[kx]&&historyData[kx].room===occ[x].room&&historyData[kx].month===month){hx=historyData[kx];break;}}
-        if(hx){hasBill++; if(hx.payStatus==='ชำระแล้ว')paidCnt++; else unpaidCnt++;}
+        if(hx && !isBillCancelled(hx)){hasBill++; if(hx.payStatus==='ชำระแล้ว')paidCnt++; else unpaidCnt++;}
       }
       var paidPct=hasBill>0?Math.round(paidCnt/hasBill*100):0;
       var unpaidPct=hasBill>0?Math.round(unpaidCnt/hasBill*100):0;
@@ -2776,6 +2819,7 @@
       for(var j=0;j<occ.length;j++) {
         var t = occ[j]; var h = null;
         for(var k=0;k<historyData.length;k++) { if(historyData[k]&&historyData[k].room===t.room&&historyData[k].month===month) { h=historyData[k]; break; } }
+        if(h && isBillCancelled(h)) { tbody += '<tr style="opacity:.6;"><td><b style="color:#64748b;">'+t.room+'</b></td><td style="color:#64748b;">'+(t.name||'-')+'</td><td style="text-align:center">'+billStatusBadge(h)+'</td><td style="text-align:right">-</td></tr>'; continue; }
         if(h) {
           var isPaid = (h.payStatus === 'ชำระแล้ว');
           var bill_rp=calcRoomBill(t.room, month);
@@ -2808,7 +2852,7 @@
       checkOverdue(occ, month); updateExpenseChart(expTotals);
       // Update payment nav badge from dashboard data
       var unpaidNavCnt=0;
-      for(var nb=0;nb<occ.length;nb++){var hn=null;for(var kn=0;kn<historyData.length;kn++){if(historyData[kn]&&historyData[kn].room===occ[nb].room&&historyData[kn].month===month){hn=historyData[kn];break;}}if(hn&&hn.payStatus!=='ชำระแล้ว')unpaidNavCnt++;}
+      for(var nb=0;nb<occ.length;nb++){var hn=null;for(var kn=0;kn<historyData.length;kn++){if(historyData[kn]&&historyData[kn].room===occ[nb].room&&historyData[kn].month===month){hn=historyData[kn];break;}}if(hn&&hn.payStatus!=='ชำระแล้ว'&&!isBillCancelled(hn))unpaidNavCnt++;}
       var payBadge2=document.getElementById('payment-nav-badge');
       if(payBadge2){payBadge2.innerText=unpaidNavCnt;payBadge2.style.display=unpaidNavCnt>0?'inline-block':'none';}
       // Sync payments page
@@ -3145,6 +3189,10 @@
         continue;
       }
 
+      if(isBillCancelled(h)){
+        aoa.push([seq, t.room, roomStatus, t.name||'-', '-','-','-','-','-','-','-','ยกเลิกบิล','-', h.cancelInfo||'']);
+        continue;
+      }
       var bill=calcRoomBill(t.room,month);
       var isPaid=(h.payStatus==='ชำระแล้ว');
       var rent=bill?bill.rent:parseFloat(t.rent)||0;
@@ -3293,7 +3341,7 @@
       for(var i=0;i<occupied.length;i++) {
         var t=occupied[i]; var h=null;
         if(raw.history&&Array.isArray(raw.history)){for(var j=0;j<raw.history.length;j++){if(raw.history[j]&&raw.history[j].room===t.room&&raw.history[j].month===month){h=raw.history[j];break;}}}
-        if(h&&h.payStatus!=='ชำระแล้ว') overdueList.push(t);
+        if(h&&h.payStatus!=='ชำระแล้ว'&&!isBillCancelled(h)) overdueList.push(t);
       }
       if(countBadge){countBadge.style.display=overdueList.length>0?'inline-block':'none';countBadge.innerText=overdueList.length;}
       if(overdueList.length>0) {
@@ -3400,6 +3448,52 @@
       return ra.localeCompare(rb,undefined,{numeric:true,sensitivity:'base'});
     });
   }
+
+  // ===== ยกเลิกบิล (ไม่ลบข้อมูล) =====
+  var BILL_CANCELLED = 'ยกเลิกบิล';
+  function isBillCancelled(h){ return !!h && String(h.payStatus||'').trim() === BILL_CANCELLED; }
+  function billStatusBadge(h){
+    if (isBillCancelled(h)) return '<span class="g-badge badge-neutral" title="'+String((h&&h.cancelInfo)||'').replace(/"/g,'&quot;')+'"><i class="fa-solid fa-ban me-1"></i>ยกเลิกบิล</span>';
+    return (h && h.payStatus==='ชำระแล้ว') ? '<span class="g-badge badge-success">ชำระแล้ว</span>' : '<span class="g-badge badge-danger">ค้างชำระ</span>';
+  }
+  var _cancelTarget = null;
+  function openCancelBill(room, month){
+    var b = calcRoomBill(room, month);
+    _cancelTarget = { room: room, month: month };
+    document.getElementById('cb-room').innerText = room;
+    document.getElementById('cb-month').innerText = billLabel(month);
+    document.getElementById('cb-amount').innerText = b ? b.total.toLocaleString('en-US',{minimumFractionDigits:2}) : '-';
+    document.getElementById('cb-reason').value = '';
+    new bootstrap.Modal(document.getElementById('cancelBillModal')).show();
+  }
+  function cbPreset(t){ document.getElementById('cb-reason').value = t; }
+  function submitCancelBill(btn){
+    if(!_cancelTarget) return;
+    var room=_cancelTarget.room, month=_cancelTarget.month, reason=document.getElementById('cb-reason').value.trim();
+    var orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin me-1"></i>กำลังยกเลิก...';
+    google.script.run.withSuccessHandler(function(r){
+      btn.disabled=false; btn.innerHTML=orig;
+      r = r || '';
+      if (r.indexOf('SUCCESS') !== 0) return alert(r.replace('ERROR:','').trim());
+      (raw.history||[]).forEach(function(h){ if(h && h.room===room && h.month===month){ h.payStatus=BILL_CANCELLED; h.cancelInfo='ยกเลิกแล้ว' + (reason?' · '+reason:''); } });
+      var md=bootstrap.Modal.getInstance(document.getElementById('cancelBillModal')); if(md) md.hide();
+      alert(r.replace('SUCCESS:','').trim());
+      try{ renderPaymentsPage(); }catch(e){} try{ renderPayments(); }catch(e){}
+    }).withFailureHandler(function(err){ btn.disabled=false; btn.innerHTML=orig; alert('ยกเลิกบิลไม่สำเร็จ: '+(err&&err.message?err.message:err)); })
+      .cancelBillBackend(room, month, reason);
+  }
+  function restoreBill(room, month){
+    if(!confirm('คืนบิลห้อง '+room+' รอบ '+billLabel(month)+' กลับเป็น "ค้างชำระ" ?')) return;
+    google.script.run.withSuccessHandler(function(r){
+      r = r || '';
+      if (r.indexOf('SUCCESS') !== 0) return alert(r.replace('ERROR:','').trim());
+      (raw.history||[]).forEach(function(h){ if(h && h.room===room && h.month===month){ h.payStatus='ค้างชำระ'; h.cancelInfo=''; } });
+      alert(r.replace('SUCCESS:','').trim());
+      try{ renderPaymentsPage(); }catch(e){} try{ renderPayments(); }catch(e){}
+    }).restoreBillBackend(room, month);
+  }
+  var _payShowCancelled = false;
+  function togglePayCancelled(){ _payShowCancelled = !_payShowCancelled; renderPaymentsPage(); }
 
   // วิธีชำระเงินของบิล: ใช้ค่าที่บันทึกตอนรับชำระ (PayMethod) ถ้าไม่มี (บิลเก่า) ดูจากสลิปที่แนบของรอบนั้น
   function getPayMethod(room, month) {
@@ -3591,7 +3685,7 @@
         +'<td style="text-align:right;">'+rhFmt(b.rent)+'</td>'
         +'<td style="text-align:right;">'+(b.hasPrev?b.wUnits:'-')+'</td><td style="text-align:right;">'+(b.hasPrev?b.eUnits:'-')+'</td>'
         +'<td style="text-align:right;font-weight:700;">'+(b.hasPrev?rhFmt(b.total):'-')+'</td>'
-        +'<td style="text-align:center;">'+(paid?'<span class="g-badge badge-success">ชำระแล้ว</span>':'<span class="g-badge badge-danger">ค้างชำระ</span>')+'</td>'
+        +'<td style="text-align:center;">'+billStatusBadge(x.h)+'</td>'
         +'<td>'+note+'</td></tr>';
     }).join('');
   }
@@ -3656,7 +3750,7 @@
           tooltip:{ titleFont:{family:'Noto Sans Thai'}, bodyFont:{family:'Noto Sans Thai'}, footerFont:{family:'Noto Sans Thai'}, padding:10, cornerRadius:8,
             filter:function(c){ return c.parsed.y>0; },
             callbacks:{ label:function(c){ return c.dataset.label+': ฿'+rhFmt(c.parsed.y); },
-              footer:function(items){ var r=rr[items[0].dataIndex]; return r ? 'รวม ฿'+rhFmt(r.b.total)+(r.h&&r.h.payStatus==='ชำระแล้ว'?' (ชำระแล้ว)':' (ค้างชำระ)') : ''; } } } },
+              footer:function(items){ var r=rr[items[0].dataIndex]; return r ? 'รวม ฿'+rhFmt(r.b.total)+(isBillCancelled(r.h)?' (ยกเลิกบิล)':(r.h&&r.h.payStatus==='ชำระแล้ว'?' (ชำระแล้ว)':' (ค้างชำระ)')) : ''; } } } },
         scales:{ x:{ stacked:true, grid:{display:false}, ticks:{ font:{family:'Noto Sans Thai', size:11}, color:'#64748b' } },
           y:{ stacked:true, beginAtZero:true, grid:{ color:'#eef2f7' }, border:{display:false}, ticks:{ font:{size:11}, color:'#64748b', callback:function(v){ return '฿'+rhFmt(v); } } } } }
     });
@@ -3702,7 +3796,7 @@
       var rentCell = rhFmt(b.rent) + (b.rentFromBill ? '' : '<div style="font-size:0.66rem;color:#94a3b8;" title="บิลนี้ไม่มีบันทึกค่าเช่าตอนออกบิล ใช้ค่าเช่าปัจจุบันของห้อง">ค่าเช่าปัจจุบัน</div>');
       var wCell = b.wUnits + '<div style="font-size:0.66rem;color:#94a3b8;">'+rhFmt(b.prevW)+'→'+rhFmt(b.curW)+'</div>';
       var eCell = b.eUnits + '<div style="font-size:0.66rem;color:#94a3b8;">'+rhFmt(b.prevE)+'→'+rhFmt(b.curE)+'</div>';
-      var st = paid ? '<span class="g-badge badge-success">ชำระแล้ว</span>' : '<span class="g-badge badge-danger">ค้างชำระ</span>';
+      var st = billStatusBadge(r.h);
       return '<tr style="'+rowBg+'"><td><b>'+billLabel(r.month)+'</b><div style="font-size:0.66rem;color:#94a3b8;">จดเดือน '+r.month+'</div></td>'
         +'<td style="text-align:right;">'+rentCell+'</td>'
         +'<td style="text-align:right;">'+wCell+'</td><td style="text-align:right;">'+rhFmt(b.wBill)+'</td>'
@@ -4187,6 +4281,7 @@
         }
         for(var i=0;i<res.invoices.length;i++){
           var inv=res.invoices[i];
+          if(isBillCancelled(rhHist(inv.room, month))) continue; // บิลที่ยกเลิกไม่ออกใบแจ้งหนี้
           if((mode==='occupied'&&inv.status==='มีคนพัก')||(mode==='all')||(mode==='vacant'&&inv.status!=='มีคนพัก')||(mode==='specific'&&checkedRooms[inv.room])){
             filtered.push(inv);
           }
@@ -4463,7 +4558,7 @@
           +'<td style="text-align:right;color:#fbbf24;font-weight:700;">'+eBillAmt.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td>'
           +'<td style="text-align:right;font-weight:700;">'+tot.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td>'
           +'<td style="text-align:right">'+lateFeeHtml+'</td>'
-          +'<td style="color:'+(paid?'#16a34a':'#dc2626')+';font-weight:700;">'+h.payStatus+'</td>'
+          +'<td style="color:'+(isBillCancelled(h)?'#64748b':(paid?'#16a34a':'#dc2626'))+';font-weight:700;">'+h.payStatus+'</td>'
           +'</tr>';
       });
     }
@@ -4560,6 +4655,9 @@
       if (isPaid && h.paidDate) { var _d = new Date(h.paidDate); if (!isNaN(_d.getTime())) pd = _d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}); }
       // เดือนแรกของห้อง = เลขมิเตอร์ตั้งต้น ไม่ใช่บิลจริง (หน่วยจะเท่ากับเลขทั้งหมด) จึงไม่นับในรายงาน
       if (bill && !bill.hasPrev) return { roomStatus: t.status, vacant:false, hasMeters:false, start:true, payStatus:'เลขมิเตอร์เริ่มต้น', payMethod:'', paidDate:'', rent:null, water:null, elec:null, common:null, late:null };
+      if (bill && isBillCancelled(h)) {
+        return { roomStatus: t.status, vacant:false, hasMeters:true, cancelled:true, cancelInfo: h.cancelInfo || '', payStatus: BILL_CANCELLED, payMethod:'', paidDate:'', rent: bill.rent, water: bill.wBill, elec: bill.eBill, common: bill.common, late: opt.late ? getLateFeeOf(bill) : 0 };
+      }
       if (bill) {
         var lf = opt.late ? getLateFeeOf(bill) : 0; // ค่าปรับที่กรอกเอง (ไม่คำนวณอัตโนมัติ)
         return { roomStatus: t.status, vacant:false, hasMeters:true, payStatus: isPaid ? 'ชำระแล้ว' : 'ค้างชำระ', payMethod:pm, paidDate:pd, rent: bill.rent, water: bill.wBill, elec: bill.eBill, common: bill.common, late: lf };
@@ -4572,6 +4670,8 @@
     function pass(bd) {
       if (!filterActive) return true;
       if (bd.vacant || !bd.hasMeters) return false;
+      if (opt.billStatus === 'cancelled') return !!bd.cancelled;
+      if (bd.cancelled) return false;
       var paid = (bd.payStatus === 'ชำระแล้ว');
       if (opt.billStatus === 'paid' && !paid) return false;
       if (opt.billStatus === 'unpaid' && paid) return false;
@@ -4582,7 +4682,7 @@
     var statusLabel = (opt.occ && opt.vacant && opt.reserved) ? 'ทุกสถานะ'
       : [opt.occ?'มีคนพัก':null, opt.vacant?'ห้องว่าง':null, opt.reserved?'ติดจอง':null].filter(Boolean).join(' / ');
     var chargeLabel = chargeCols.map(function(c){ return c.label; }).join(' / ') + (opt.late ? ' / ค่าปรับ' : '');
-    var filterLabel = 'สถานะบิล: ' + ({all:'ทั้งหมด', paid:'ชำระแล้ว', unpaid:'ค้างชำระ'}[opt.billStatus] || 'ทั้งหมด')
+    var filterLabel = 'สถานะบิล: ' + ({all:'ทั้งหมด', paid:'ชำระแล้ว', unpaid:'ค้างชำระ', cancelled:'ยกเลิกบิล'}[opt.billStatus] || 'ทั้งหมด')
       + ' | วิธีชำระ: ' + (opt.payMethod === 'all' ? 'ทั้งหมด' : opt.payMethod);
 
     return { opt:opt, chargeCols:chargeCols, months:months, tenants:tenants, getBillData:getBillData, pass:pass, filterActive:filterActive,
@@ -4595,9 +4695,9 @@
     function mLabelLong(m){ var mp=m.split('/'); try { return new Date(parseInt(mp[1]),parseInt(mp[0]),1).toLocaleDateString('th-TH',{month:'long',year:'numeric'}); } catch(e){ return m; } }
     var rows = [];
     var T = { bills:0, billed:0, late:0, net:0, paidN:0, paidAmt:0, unpaidN:0, unpaidAmt:0, waitN:0,
-              transferN:0, transferAmt:0, cashN:0, cashAmt:0, otherPaidN:0, otherPaidAmt:0,
+              transferN:0, transferAmt:0, cashN:0, cashAmt:0, otherPaidN:0, otherPaidAmt:0, cancelN:0, cancelAmt:0,
               charge: cc.map(function(){ return 0; }) };
-    var byMonth = model.months.map(function(m){ return { m:m, ml:mLabelLong(m), bills:0, billed:0, paidAmt:0, unpaidAmt:0, transferAmt:0, cashAmt:0, paidN:0, unpaidN:0 }; });
+    var byMonth = model.months.map(function(m){ return { m:m, ml:mLabelLong(m), bills:0, billed:0, paidAmt:0, unpaidAmt:0, transferAmt:0, cashAmt:0, paidN:0, unpaidN:0, cancelN:0, cancelAmt:0 }; });
     model.months.forEach(function(m, mi){
       model.tenants.forEach(function(t){
         var bd = model.getBillData(t.room, m);
@@ -4605,6 +4705,13 @@
         if (!model.pass(bd)) return;
         var r = { m:m, ml:byMonth[mi].ml, room:t.room, name:t.name||'-', bd:bd, vals:[], sub:0, late:0, net:0, kind:'vacant' };
         if (bd.vacant) { r.kind='vacant'; }
+        else if (bd.cancelled) {
+          // ยกเลิกบิล: แสดงยอดเดิมไว้ให้ตรวจสอบ แต่ไม่นับในยอดเรียกเก็บ/ชำระ/ค้าง
+          r.kind='cancel';
+          cc.forEach(function(c){ var v=summaryChargeValue(bd,c.key)||0; r.vals.push(v); r.sub+=v; });
+          r.late = opt.late ? (bd.late||0) : 0; r.net = r.sub + r.late;
+          T.cancelN++; T.cancelAmt+=r.net; byMonth[mi].cancelN++; byMonth[mi].cancelAmt+=r.net;
+        }
         else if (!bd.hasMeters) {
           r.kind='wait'; T.waitN++;
           cc.forEach(function(c){ var known=(c.key==='rent'||c.key==='common'); r.vals.push(known ? (summaryChargeValue(bd,c.key)||0) : null); });
@@ -4625,7 +4732,7 @@
         rows.push(r);
       });
     });
-    return { rows:rows, T:T, byMonth:byMonth.filter(function(b){ return b.bills>0; }) };
+    return { rows:rows, T:T, byMonth:byMonth.filter(function(b){ return b.bills>0 || b.cancelN>0; }) };
   }
 
   function summaryPeriodLabel(year, period) {
@@ -4684,7 +4791,12 @@
       muted:{ font:{color:{rgb:'94A3B8'}}, border:BORDER, alignment:{horizontal:'center'} },
       kpiL:{ font:{bold:true, color:{rgb:'334155'}}, fill:{fgColor:{rgb:'EFF6FF'}}, border:BORDER },
       kpiV:{ font:{bold:true, sz:12, color:{rgb:'0F172A'}}, fill:{fgColor:{rgb:'EFF6FF'}}, border:BORDER, numFmt:NUM, alignment:{horizontal:'right'} },
-      kpiN:{ font:{bold:true, sz:12, color:{rgb:'0F172A'}}, fill:{fgColor:{rgb:'EFF6FF'}}, border:BORDER, numFmt:INT, alignment:{horizontal:'center'} }
+      kpiN:{ font:{bold:true, sz:12, color:{rgb:'0F172A'}}, fill:{fgColor:{rgb:'EFF6FF'}}, border:BORDER, numFmt:INT, alignment:{horizontal:'center'} },
+      cancelL:{ font:{bold:true, color:{rgb:'475569'}}, fill:{fgColor:{rgb:'F1F5F9'}}, border:BORDER },
+      cancelN:{ font:{bold:true, color:{rgb:'475569'}}, fill:{fgColor:{rgb:'F1F5F9'}}, border:BORDER, numFmt:INT, alignment:{horizontal:'center'} },
+      cancelV:{ font:{bold:true, color:{rgb:'475569'}}, fill:{fgColor:{rgb:'F1F5F9'}}, border:BORDER, numFmt:NUM, alignment:{horizontal:'right'} },
+      cancel:{ font:{bold:true, color:{rgb:'475569'}}, fill:{fgColor:{rgb:'E2E8F0'}}, border:BORDER, alignment:{horizontal:'center'} },
+      cancelNum:{ font:{color:{rgb:'94A3B8'}, strike:true}, border:BORDER, numFmt:NUM, alignment:{horizontal:'right'} }
     };
     // aoa + style map
     function Sheet(){ this.aoa=[]; this.sty={}; this.merges=[]; }
@@ -4707,6 +4819,7 @@
     S.row(['ชำระแล้ว', T.paidN, T.paidAmt], [ST.kpiL, ST.kpiN, ST.kpiV]);
     S.row(['ค้างชำระ', T.unpaidN, T.unpaidAmt], [ST.kpiL, ST.kpiN, ST.kpiV]);
     S.row(['อัตราการเก็บเงิน', '', T.net ? T.paidAmt / T.net : 0], [ST.kpiL, ST.kpiN, Object.assign({}, ST.kpiV, {numFmt:'0.0%'})]);
+    S.row(['ยกเลิกบิล (ไม่นับในยอดด้านบน)', T.cancelN, T.cancelAmt], [ST.cancelL, ST.cancelN, ST.cancelV]);
     S.row([]);
     S.row(['แยกตามวิธีชำระเงิน'], [ST.sec]);
     S.row(['วิธีชำระ','จำนวนบิล','ยอดเงิน (฿)'], ST.head);
@@ -4723,17 +4836,24 @@
     S.row(['รวม', '', T.net], [ST.tot, ST.tot, ST.totNum]);
     S.row([]);
     S.row(['สรุปรายเดือน (ตามรอบบิล)'], [ST.sec]);
-    S.row(['รอบบิล','จำนวนบิล','ยอดเรียกเก็บ (฿)','ชำระแล้ว (฿)','ค้างชำระ (฿)','โอนเงิน (฿)','เงินสด (฿)'], ST.head);
-    R.byMonth.forEach(function(b){ S.row([b.ml, b.bills, b.billed, b.paidAmt, b.unpaidAmt, b.transferAmt, b.cashAmt], [ST.cell, ST.int, ST.num, ST.num, ST.num, ST.num, ST.num]); });
-    S.row(['รวม', T.bills, T.net, T.paidAmt, T.unpaidAmt, T.transferAmt, T.cashAmt], [ST.tot, Object.assign({}, ST.tot, {numFmt:INT, alignment:{horizontal:'center'}}), ST.totNum, ST.totNum, ST.totNum, ST.totNum, ST.totNum]);
-    XLSX.utils.book_append_sheet(wb, S.build([{wch:26},{wch:12},{wch:18},{wch:16},{wch:16},{wch:16},{wch:16}]), 'สรุป');
+    S.row(['รอบบิล','จำนวนบิล','ยอดเรียกเก็บ (฿)','ชำระแล้ว (฿)','ค้างชำระ (฿)','โอนเงิน (฿)','เงินสด (฿)','ยกเลิกบิล (฿)'], ST.head);
+    R.byMonth.forEach(function(b){ S.row([b.ml, b.bills, b.billed, b.paidAmt, b.unpaidAmt, b.transferAmt, b.cashAmt, b.cancelAmt], [ST.cell, ST.int, ST.num, ST.num, ST.num, ST.num, ST.num, ST.num]); });
+    S.row(['รวม', T.bills, T.net, T.paidAmt, T.unpaidAmt, T.transferAmt, T.cashAmt, T.cancelAmt], [ST.tot, Object.assign({}, ST.tot, {numFmt:INT, alignment:{horizontal:'center'}}), ST.totNum, ST.totNum, ST.totNum, ST.totNum, ST.totNum, ST.totNum]);
+    if (T.cancelN) {
+      S.row([]);
+      S.row(['บิลที่ยกเลิก (ข้อมูลยังอยู่ครบ)'], [ST.sec]);
+      S.row(['รอบบิล','ห้อง','ยอดบิล (฿)','เหตุผล / วันที่ยกเลิก'], ST.head);
+      R.rows.forEach(function(r){ if (r.kind==='cancel') S.row([r.ml, r.room, r.net, r.bd.cancelInfo || ''], [ST.cell, Object.assign({}, ST.cell, {alignment:{horizontal:'center'}}), ST.num, ST.cell]); });
+      S.row(['รวม ' + T.cancelN + ' บิล', '', T.cancelAmt, ''], [ST.tot, ST.tot, ST.totNum, ST.tot]);
+    }
+    XLSX.utils.book_append_sheet(wb, S.build([{wch:26},{wch:12},{wch:18},{wch:30},{wch:16},{wch:16},{wch:16},{wch:16}]), 'สรุป');
 
     // ───── ชีต 2: รายการรายเดือน ─────
     var D = new Sheet();
     var hdr = ['ลำดับ','รอบบิล','ห้อง','ชื่อผู้เช่า'];
     cc.forEach(function(c){ hdr.push(c.label + ' (฿)'); });
     if (opt.late) hdr.push('ค่าปรับ (฿)');
-    hdr.push('ยอดรวม (฿)','สถานะบิล','วันที่ชำระ','วิธีชำระ');
+    hdr.push('ยอดรวม (฿)','สถานะบิล','วันที่ชำระ','วิธีชำระ','หมายเหตุ');
     D.row([dormName + ' — รายการรายเดือน'], [ST.title]); D.merges.push({s:{r:0,c:0},e:{r:0,c:hdr.length-1}});
     D.row(['ปี ' + year + ' · ' + periodLabel + ' · ' + model.filterLabel + ' · * = รอจดมิเตอร์'], [ST.sub]); D.merges.push({s:{r:1,c:0},e:{r:1,c:hdr.length-1}});
     D.row([]);
@@ -4744,24 +4864,27 @@
       var vals = [seq, r.ml, r.room, r.name], sty = [ST.int, ST.cell, Object.assign({}, ST.cell, {font:{bold:true}}), ST.cell];
       if (r.kind === 'vacant') {
         cc.forEach(function(){ vals.push('-'); sty.push(ST.muted); }); if (opt.late) { vals.push('-'); sty.push(ST.muted); }
-        vals.push('-', r.bd.roomStatus, '', ''); sty.push(ST.muted, ST.muted, ST.muted, ST.muted);
+        vals.push('-', r.bd.roomStatus, '', '', ''); sty.push(ST.muted, ST.muted, ST.muted, ST.muted, ST.muted);
       } else if (r.kind === 'wait') {
         r.vals.forEach(function(v){ vals.push(v===null ? '*' : v); sty.push(v===null ? ST.wait : ST.num); }); if (opt.late) { vals.push('*'); sty.push(ST.wait); }
-        vals.push('*', 'รอจดมิเตอร์', '', ''); sty.push(ST.wait, ST.wait, ST.cell, ST.cell);
+        vals.push('*', 'รอจดมิเตอร์', '', '', ''); sty.push(ST.wait, ST.wait, ST.cell, ST.cell, ST.cell);
+      } else if (r.kind === 'cancel') {
+        r.vals.forEach(function(v){ vals.push(v); sty.push(ST.cancelNum); }); if (opt.late) { vals.push(r.late); sty.push(ST.cancelNum); }
+        vals.push(r.net, 'ยกเลิกบิล', '', '-', r.bd.cancelInfo || ''); sty.push(ST.cancelNum, ST.cancel, ST.cell, Object.assign({}, ST.cell, {alignment:{horizontal:'center'}}), Object.assign({}, ST.cell, {font:{color:{rgb:'475569'}}}));
       } else {
         r.vals.forEach(function(v){ vals.push(v); sty.push(ST.num); }); if (opt.late) { vals.push(r.late); sty.push(ST.num); }
         var paid = r.bd.payStatus === 'ชำระแล้ว';
-        vals.push(r.net, r.bd.payStatus, r.bd.paidDate || '', paid ? (r.bd.payMethod || '-') : '-');
-        sty.push(Object.assign({}, ST.num, {font:{bold:true}}), paid ? ST.paid : ST.unpaid, Object.assign({}, ST.cell, {alignment:{horizontal:'center'}}), Object.assign({}, ST.cell, {alignment:{horizontal:'center'}}));
+        vals.push(r.net, r.bd.payStatus, r.bd.paidDate || '', paid ? (r.bd.payMethod || '-') : '-', '');
+        sty.push(Object.assign({}, ST.num, {font:{bold:true}}), paid ? ST.paid : ST.unpaid, Object.assign({}, ST.cell, {alignment:{horizontal:'center'}}), Object.assign({}, ST.cell, {alignment:{horizontal:'center'}}), ST.cell);
       }
       D.row(vals, sty);
     });
     var totVals = ['', '', '', 'รวม ' + T.bills + ' บิล'], totSty = [ST.tot, ST.tot, ST.tot, ST.tot];
     T.charge.forEach(function(v){ totVals.push(v); totSty.push(ST.totNum); }); if (opt.late) { totVals.push(T.late); totSty.push(ST.totNum); }
-    totVals.push(T.net, 'ชำระ ' + T.paidN + ' / ค้าง ' + T.unpaidN, '', 'โอน ' + T.transferN + ' / สด ' + T.cashN); totSty.push(ST.totNum, ST.tot, ST.tot, ST.tot);
+    totVals.push(T.net, 'ชำระ ' + T.paidN + ' / ค้าง ' + T.unpaidN, '', 'โอน ' + T.transferN + ' / สด ' + T.cashN, T.cancelN ? ('ยกเลิก ' + T.cancelN + ' บิล (ไม่นับในยอด)') : ''); totSty.push(ST.totNum, ST.tot, ST.tot, ST.tot, ST.tot);
     D.row(totVals, totSty);
     var dcols = [{wch:7},{wch:18},{wch:8},{wch:24}]; cc.forEach(function(){ dcols.push({wch:13}); }); if (opt.late) dcols.push({wch:12});
-    dcols.push({wch:14},{wch:13},{wch:12},{wch:14});
+    dcols.push({wch:14},{wch:13},{wch:12},{wch:14},{wch:34});
     var wsD = D.build(dcols); wsD['!freeze'] = { xSplit:0, ySplit:4 };
     XLSX.utils.book_append_sheet(wb, wsD, 'รายการรายเดือน');
 
@@ -4774,26 +4897,27 @@
     var ph = ['ห้อง','ชื่อผู้เช่า']; months.forEach(function(m){ ph.push(mShort(m)); }); ph.push('รวม (฿)');
     P.row(ph, ST.head);
     P.merges.push({s:{r:0,c:0},e:{r:0,c:ph.length-1}}, {s:{r:1,c:0},e:{r:1,c:ph.length-1}});
-    var cell = {}; R.rows.forEach(function(r){ if (r.kind==='bill') cell[r.room+'|'+r.m] = r; });
+    var cell = {}, ccell = {}; R.rows.forEach(function(r){ if (r.kind==='bill') cell[r.room+'|'+r.m] = r; if (r.kind==='cancel') ccell[r.room+'|'+r.m] = r; });
     var colTot = months.map(function(){ return 0; }), grand = 0;
     tenants.forEach(function(t){
-      var has = months.some(function(m){ return cell[t.room+'|'+m]; });
+      var has = months.some(function(m){ return cell[t.room+'|'+m] || ccell[t.room+'|'+m]; });
       if (model.filterActive && !has) return;
       var vals = [t.room, t.name||'-'], sty = [Object.assign({}, ST.cell, {font:{bold:true}}), ST.cell], tot = 0;
       months.forEach(function(m, mi){ var r = cell[t.room+'|'+m];
         if (r) { vals.push(r.net); sty.push(r.bd.payStatus==='ชำระแล้ว' ? Object.assign({}, ST.num, {fill:{fgColor:{rgb:'F0FDF4'}}}) : Object.assign({}, ST.num, {fill:{fgColor:{rgb:'FEF2F2'}}, font:{color:{rgb:'991B1B'}}})); tot += r.net; colTot[mi] += r.net; }
+        else if (ccell[t.room+'|'+m]) { vals.push('ยกเลิก'); sty.push(ST.cancel); }
         else { vals.push('-'); sty.push(ST.muted); } });
       vals.push(tot); sty.push(Object.assign({}, ST.num, {font:{bold:true}})); grand += tot;
       P.row(vals, sty);
     });
     var pt = ['รวม', '']; var pts = [ST.tot, ST.tot]; colTot.forEach(function(v){ pt.push(v); pts.push(ST.totNum); }); pt.push(grand); pts.push(ST.totNum);
     P.row(pt, pts);
-    P.row([]); P.row(['พื้นเขียว = ชำระแล้ว · พื้นแดง = ค้างชำระ · - = ไม่มีบิล/ไม่ตรงตัวกรอง'], [ST.sub]);
+    P.row([]); P.row(['พื้นเขียว = ชำระแล้ว · พื้นแดง = ค้างชำระ · ยกเลิก = ยกเลิกบิล (ไม่นับในยอด) · - = ไม่มีบิล/ไม่ตรงตัวกรอง'], [ST.sub]);
     var pcols = [{wch:8},{wch:24}]; months.forEach(function(){ pcols.push({wch:12}); }); pcols.push({wch:14});
     var wsP = P.build(pcols); wsP['!freeze'] = { xSplit:2, ySplit:4 };
     XLSX.utils.book_append_sheet(wb, wsP, 'สรุปรายห้อง');
 
-    var fTag = (opt.billStatus!=='all' ? '_' + ({paid:'ชำระแล้ว', unpaid:'ค้างชำระ'}[opt.billStatus]) : '') + (opt.payMethod!=='all' ? '_' + opt.payMethod : '');
+    var fTag = (opt.billStatus!=='all' ? '_' + ({paid:'ชำระแล้ว', unpaid:'ค้างชำระ', cancelled:'ยกเลิกบิล'}[opt.billStatus]) : '') + (opt.payMethod!=='all' ? '_' + opt.payMethod : '');
     XLSX.writeFile(wb, 'รายงานสรุป_' + year + '_' + period + fTag + '.xlsx');
   }
 
@@ -4828,6 +4952,9 @@
       } else if (r.kind === 'wait') {
         r.vals.forEach(function(v){ tds += v===null ? '<td class="r wt">*</td>' : '<td class="r">'+fmtB(v)+'</td>'; }); if (opt.late) tds += '<td class="r wt">*</td>';
         tds += '<td class="r wt">*</td><td class="c"><span class="pill yl">รอจดมิเตอร์</span></td><td></td><td></td>';
+      } else if (r.kind === 'cancel') {
+        r.vals.forEach(function(v){ tds += '<td class="r st">'+fmtB(v)+'</td>'; }); if (opt.late) tds += '<td class="r st">'+(r.late ? fmtB(r.late) : '-')+'</td>';
+        tds += '<td class="r st">'+fmtB(r.net)+'</td><td class="c"><span class="pill gy">ยกเลิกบิล</span></td><td colspan="2" style="font-size:10px;color:#64748b;">'+esc(r.bd.cancelInfo||'')+'</td>';
       } else {
         r.vals.forEach(function(v){ tds += '<td class="r">'+fmtB(v)+'</td>'; }); if (opt.late) tds += '<td class="r">'+(r.late ? fmtB(r.late) : '-')+'</td>';
         var paid = r.bd.payStatus === 'ชำระแล้ว';
@@ -4839,7 +4966,7 @@
     if (!body) body = '<tr><td colspan="'+colCount+'" class="c mu" style="padding:16px">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
     var tfoot = '<td colspan="4" class="r">รวม '+T.bills+' บิล</td>';
     T.charge.forEach(function(v){ tfoot += '<td class="r">'+fmtB(v)+'</td>'; }); if (opt.late) tfoot += '<td class="r">'+fmtB(T.late)+'</td>';
-    tfoot += '<td class="r">'+fmtB(T.net)+'</td><td class="c">ชำระ '+T.paidN+' / ค้าง '+T.unpaidN+'</td><td></td><td class="c">โอน '+T.transferN+' / สด '+T.cashN+'</td>';
+    tfoot += '<td class="r">'+fmtB(T.net)+'</td><td class="c">ชำระ '+T.paidN+' / ค้าง '+T.unpaidN+(T.cancelN?' / ยกเลิก '+T.cancelN:'')+'</td><td></td><td class="c">โอน '+T.transferN+' / สด '+T.cashN+'</td>';
 
     // สรุปตามวิธีชำระ + รายเดือน
     var methodRows = '<tr><td>โอนเงิน</td><td class="c">'+T.transferN+'</td><td class="r">'+fmtB(T.transferAmt)+'</td></tr>'
@@ -4848,16 +4975,16 @@
       + '<tr><td>ค้างชำระ</td><td class="c">'+T.unpaidN+'</td><td class="r">'+fmtB(T.unpaidAmt)+'</td></tr>';
     var chargeRows = ''; cc.forEach(function(c, ci){ chargeRows += '<tr><td>'+c.label+'</td><td class="r">'+fmtB(T.charge[ci])+'</td></tr>'; });
     if (opt.late) chargeRows += '<tr><td>ค่าปรับ (ที่กรอกไว้)</td><td class="r">'+fmtB(T.late)+'</td></tr>';
-    var monthRows = R.byMonth.map(function(b){ return '<tr><td>'+esc(b.ml)+'</td><td class="c">'+b.bills+'</td><td class="r">'+fmtB(b.billed)+'</td><td class="r gnT">'+fmtB(b.paidAmt)+'</td><td class="r rdT">'+fmtB(b.unpaidAmt)+'</td><td class="r">'+fmtB(b.transferAmt)+'</td><td class="r">'+fmtB(b.cashAmt)+'</td></tr>'; }).join('')
-      || '<tr><td colspan="7" class="c mu">-</td></tr>';
+    var monthRows = R.byMonth.map(function(b){ return '<tr><td>'+esc(b.ml)+'</td><td class="c">'+b.bills+'</td><td class="r">'+fmtB(b.billed)+'</td><td class="r gnT">'+fmtB(b.paidAmt)+'</td><td class="r rdT">'+fmtB(b.unpaidAmt)+'</td><td class="r">'+fmtB(b.transferAmt)+'</td><td class="r">'+fmtB(b.cashAmt)+'</td><td class="r" style="color:#64748b">'+fmtB(b.cancelAmt)+'</td></tr>'; }).join('')
+      || '<tr><td colspan="8" class="c mu">-</td></tr>';
 
     var css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sarabun","Noto Sans Thai",Arial,sans-serif;font-size:11.5px;color:#0f172a;background:#fff;padding:22px}'
       + '@media print{body{padding:0}@page{margin:10mm;size:A4 landscape}.no-print{display:none!important}tr,.box{page-break-inside:avoid}thead{display:table-header-group}}'
       + '.no-print{margin-bottom:14px;text-align:center}.btn{border:none;padding:9px 22px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;margin:0 4px;font-family:inherit}.btn.p{background:#1d4ed8;color:#fff}.btn.g{background:#e2e8f0;color:#0f172a}'
       + '.hd{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.hd h1{font-size:20px;font-weight:800}.hd p{font-size:11px;opacity:.9;margin-top:3px}.hd .rt{text-align:right;font-size:11px;opacity:.9}'
       + '.chips{margin:-4px 0 12px}.chip{display:inline-block;background:#eff6ff;color:#1e3a8a;border:1px solid #bfdbfe;border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;margin:0 6px 4px 0}'
-      + '.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}.kpi{border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;border-top:4px solid #1d4ed8}.kpi label{display:block;font-size:10px;color:#64748b;font-weight:700}.kpi b{display:block;font-size:16px;font-weight:800;margin-top:2px}.kpi small{color:#64748b;font-size:10px;font-weight:600}'
-      + '.kpi.gn{border-top-color:#16a34a}.kpi.rd{border-top-color:#dc2626}.kpi.am{border-top-color:#d97706}.kpi.vi{border-top-color:#7c3aed}'
+      + '.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}.kpi{border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;border-top:4px solid #1d4ed8}.kpi label{display:block;font-size:10px;color:#64748b;font-weight:700}.kpi b{display:block;font-size:16px;font-weight:800;margin-top:2px}.kpi small{color:#64748b;font-size:10px;font-weight:600}'
+      + '.kpi.gn{border-top-color:#16a34a}.kpi.rd{border-top-color:#dc2626}.kpi.am{border-top-color:#d97706}.kpi.vi{border-top-color:#7c3aed}.kpi.gy{border-top-color:#64748b}.st{color:#94a3b8;text-decoration:line-through}'
       + '.grid3{display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;margin-bottom:14px}.box{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}.box h3{font-size:12px;font-weight:800;color:#1e3a8a;background:#eff6ff;padding:8px 12px;border-bottom:1px solid #dbeafe}'
       + 'table{width:100%;border-collapse:collapse}th{background:#1e3a8a;color:#fff;font-size:10.5px;font-weight:700;padding:7px 8px;text-align:left;white-space:nowrap}td{padding:6px 8px;border-bottom:1px solid #e2e8f0;vertical-align:middle}tbody tr:nth-child(even) td{background:#f8fafc}'
       + '.box table th{background:#f1f5f9;color:#334155}.r{text-align:right}.c{text-align:center}.b{font-weight:800}.mu{color:#94a3b8}.wt{color:#d97706;font-weight:700}.gnT{color:#166534;font-weight:700}.rdT{color:#991b1b;font-weight:700}'
@@ -4869,18 +4996,19 @@
       + '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet"><style>'+css+'</style></head><body>'
       + '<div class="no-print"><button class="btn p" onclick="window.print()">🖨 บันทึก / พิมพ์ PDF</button><button class="btn g" onclick="window.close()">✕ ปิด</button><div style="margin-top:6px;color:#64748b;font-size:11px">เลือกเครื่องพิมพ์ "Save as PDF" แนวนอน</div></div>'
       + '<div class="hd"><div><h1>📊 รายงานสรุปการเงิน — '+esc(dormName)+'</h1><p>ปี '+year+' · '+esc(pLabel)+'</p></div><div class="rt">สร้างเมื่อ '+today+'</div></div>'
-      + '<div class="chips"><span class="chip">ห้อง: '+esc(model.statusLabel)+'</span><span class="chip">รายการ: '+esc(model.chargeLabel)+'</span><span class="chip">สถานะบิล: '+({all:'ทั้งหมด',paid:'ชำระแล้ว',unpaid:'ค้างชำระ'}[opt.billStatus])+'</span><span class="chip">วิธีชำระ: '+(opt.payMethod==='all'?'ทั้งหมด':esc(opt.payMethod))+'</span></div>'
+      + '<div class="chips"><span class="chip">ห้อง: '+esc(model.statusLabel)+'</span><span class="chip">รายการ: '+esc(model.chargeLabel)+'</span><span class="chip">สถานะบิล: '+({all:'ทั้งหมด',paid:'ชำระแล้ว',unpaid:'ค้างชำระ',cancelled:'ยกเลิกบิล'}[opt.billStatus])+'</span><span class="chip">วิธีชำระ: '+(opt.payMethod==='all'?'ทั้งหมด':esc(opt.payMethod))+'</span></div>'
       + '<div class="kpis">'
       +   '<div class="kpi"><label>ยอดเรียกเก็บ</label><b>฿'+fmtB(T.net)+'</b><small>'+T.bills+' บิล</small></div>'
       +   '<div class="kpi gn"><label>ชำระแล้ว</label><b>฿'+fmtB(T.paidAmt)+'</b><small>'+T.paidN+' บิล · เก็บได้ '+rate+'%</small></div>'
       +   '<div class="kpi rd"><label>ค้างชำระ</label><b>฿'+fmtB(T.unpaidAmt)+'</b><small>'+T.unpaidN+' บิล</small></div>'
       +   '<div class="kpi vi"><label>รับโอนเงิน</label><b>฿'+fmtB(T.transferAmt)+'</b><small>'+T.transferN+' บิล</small></div>'
       +   '<div class="kpi am"><label>รับเงินสด</label><b>฿'+fmtB(T.cashAmt)+'</b><small>'+T.cashN+' บิล</small></div>'
+      +   '<div class="kpi gy"><label>ยกเลิกบิล</label><b>฿'+fmtB(T.cancelAmt)+'</b><small>'+T.cancelN+' บิล · ไม่นับในยอด</small></div>'
       + '</div>'
       + '<div class="grid3">'
       +   '<div class="box"><h3>แยกตามวิธีชำระเงิน</h3><table><thead><tr><th>วิธีชำระ</th><th class="c">บิล</th><th class="r">ยอดเงิน (฿)</th></tr></thead><tbody>'+methodRows+'</tbody><tfoot><tr><td>รวม</td><td class="c">'+T.bills+'</td><td class="r">'+fmtB(T.net)+'</td></tr></tfoot></table></div>'
       +   '<div class="box"><h3>แยกตามรายการ</h3><table><thead><tr><th>รายการ</th><th class="r">ยอดเงิน (฿)</th></tr></thead><tbody>'+chargeRows+'</tbody><tfoot><tr><td>รวม</td><td class="r">'+fmtB(T.net)+'</td></tr></tfoot></table></div>'
-      +   '<div class="box"><h3>สรุปรายเดือน (ตามรอบบิล)</h3><table><thead><tr><th>รอบบิล</th><th class="c">บิล</th><th class="r">เรียกเก็บ</th><th class="r">ชำระแล้ว</th><th class="r">ค้างชำระ</th><th class="r">โอน</th><th class="r">เงินสด</th></tr></thead><tbody>'+monthRows+'</tbody></table></div>'
+      +   '<div class="box"><h3>สรุปรายเดือน (ตามรอบบิล)</h3><table><thead><tr><th>รอบบิล</th><th class="c">บิล</th><th class="r">เรียกเก็บ</th><th class="r">ชำระแล้ว</th><th class="r">ค้างชำระ</th><th class="r">โอน</th><th class="r">เงินสด</th><th class="r">ยกเลิก</th></tr></thead><tbody>'+monthRows+'</tbody></table></div>'
       + '</div>'
       + '<p class="sec">📄 รายการรายเดือน</p>'
       + '<table><thead><tr>'+thead+'</tr></thead><tbody>'+body+'</tbody><tfoot><tr>'+tfoot+'</tr></tfoot></table>'
